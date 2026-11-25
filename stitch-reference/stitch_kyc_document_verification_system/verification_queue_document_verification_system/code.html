@@ -1,0 +1,377 @@
+<!DOCTYPE html><html class="light" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><title>VeriDoc AI - Document Verification System</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-surface":"#0b1c30","surface-tint":"#565e74","primary-fixed-dim":"#bec6e0","surface-container-highest":"#d3e4fe","surface-container-high":"#dce9ff","primary":"#000000","on-primary-container":"#7c839b","background":"#f8f9ff","secondary-container":"#645efb","on-secondary-fixed-variant":"#3323cc","on-tertiary-container":"#069669","surface-dim":"#cbdbf5","on-secondary":"#ffffff","inverse-primary":"#bec6e0","on-background":"#0b1c30","inverse-on-surface":"#eaf1ff","outline":"#76777d","outline-variant":"#c6c6cd","surface-container-lowest":"#ffffff","inverse-surface":"#213145","on-primary-fixed":"#131b2e","on-surface-variant":"#45464d","secondary-fixed-dim":"#c3c0ff","error-container":"#ffdad6","surface":"#f8f9ff","surface-bright":"#f8f9ff","on-error":"#ffffff","on-tertiary-fixed-variant":"#005137","primary-container":"#131b2e","on-error-container":"#93000a","on-tertiary":"#ffffff","on-primary":"#ffffff","tertiary":"#000000","secondary":"#4b41e1","on-tertiary-fixed":"#002114","tertiary-fixed":"#85f8c4","tertiary-container":"#002114","on-secondary-container":"#fffbff","on-secondary-fixed":"#0f0069","primary-fixed":"#dae2fd","secondary-fixed":"#e2dfff","surface-container-low":"#eff4ff","tertiary-fixed-dim":"#68dba9","surface-container":"#e5eeff","on-primary-fixed-variant":"#3f465c","surface-variant":"#d3e4fe","error":"#ba1a1a"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter":"1rem","space-xl":"2rem","space-sm":"0.5rem","margin":"1.5rem","space-md":"0.75rem","space-lg":"1.25rem","space-xs":"0.25rem"},"fontFamily":{"label-lg":["Inter"],"body-md":["Inter"],"label-md":["Inter"],"body-lg":["Inter"],"headline-xl":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"label-sm":["Inter"],"data-mono":["Inter"],"headline-lg":["Plus Jakarta Sans"],"body-sm":["Inter"]},"fontSize":{"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.01em","fontWeight":"600"}],"body-md":["13px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.03em","fontWeight":"600"}],"body-lg":["15px",{"lineHeight":"24px","letterSpacing":"-0.005em","fontWeight":"400"}],"headline-xl":["30px",{"lineHeight":"38px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-sm":["18px",{"lineHeight":"26px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"700"}],"data-mono":["13px",{"lineHeight":"20px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}]}}}}</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-[#FFFFFF] border-b border-[#E2E8F0] h-14"><div class="max-w-[1720px] h-full mx-auto px-6 flex items-center justify-between gap-6">
+<!-- Brand -->
+<div class="flex items-center gap-2 shrink-0">
+<span class="w-2 h-2 rounded-full bg-[#527A9E]"></span>
+<span class="text-[12px] font-semibold tracking-wider text-[#0F172A] uppercase">Document Verification</span>
+</div>
+<!-- Main Navigation -->
+<nav class="hidden lg:flex items-center gap-6 shrink-0 h-full">
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center" href="#">Overview</a>
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center" href="#">Upload Documents</a>
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center" href="#">Applicants</a>
+<a aria-current="page" class="text-[13px] font-semibold text-[#0F172A] h-full flex items-center border-b-2 border-[#111827]" href="#">Verification Queue</a>
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center" href="#">Reports</a>
+</nav>
+<!-- Right controls: Search & Officer -->
+<div class="flex items-center gap-4 shrink-0">
+<div class="relative hidden sm:flex items-center">
+<span class="material-symbols-outlined absolute left-2.5 text-[16px] text-[#94A3B8]">search</span>
+<input class="text-[12px] pl-8 pr-3 py-1.5 w-56 bg-[#F8F9FA] border border-[#E2E8F0] rounded text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#527A9E] focus:bg-white transition-colors" placeholder="Search records, docs, IDs..." type="text">
+</div>
+<div class="h-4 w-px bg-[#E2E8F0] hidden sm:block"></div>
+<div class="flex items-center gap-2.5">
+<div class="text-right hidden sm:block">
+<div class="text-[12px] font-medium text-[#0F172A] leading-tight">Arjun Mehta</div>
+<div class="text-[11px] text-[#64748B] leading-tight">Review Officer</div>
+</div>
+<div class="w-7 h-7 rounded bg-[#111827] flex items-center justify-center text-white text-[11px] font-medium">
+        AM
+      </div>
+</div>
+</div>
+</div></header><main class="w-full pt-16 bg-surface min-h-[calc(100vh-48px)]"><div class="max-w-[1720px] mx-auto px-6 py-6 space-y-5">
+<!-- Header Section: Clean breadcrumb + 38px title matching Applicants page -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1"><div>
+<div class="flex items-center gap-2 mb-1.5 text-[12px] font-medium tracking-wide">
+<span class="text-[#64748B] uppercase tracking-wider font-sans">Queue</span>
+<span class="text-[#CBD5E1]">/</span>
+<span class="text-[#527A9E] font-sans font-medium">Document Verification</span>
+</div>
+<h1 class="text-[40px] font-serif font-bold text-[#0F172A] tracking-tight leading-[1.1] mb-1.5" style="font-family: 'Newsreader', Georgia, serif;">
+Verification Queue<span class="italic font-medium text-[#527A9E]">.</span>
+</h1>
+<p class="text-[15px] text-[#64748B] leading-normal font-sans font-normal">
+Review extracted document information, resolve discrepancies, and complete applicant verification.
+</p>
+</div>
+<div class="flex items-center gap-2.5 shrink-0">
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium text-[#0F172A] bg-white border border-[#E2E8F0] rounded-lg hover:bg-[#F8F9FA] transition-colors shadow-xs" type="button">
+<span class="material-symbols-outlined text-[17px] text-[#64748B]">history</span>
+Audit History
+</button>
+<button class="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium text-white bg-[#111827] hover:bg-[#1E293B] rounded-lg transition-colors shadow-xs" type="button">
+<span class="material-symbols-outlined text-[17px]">refresh</span>
+Fetch Next
+</button>
+</div></div>
+<!-- Simplified Filter Bar -->
+<div class="bg-white border border-[#E2E8F0] rounded-lg px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+<div class="relative flex-1 min-w-[260px] max-w-md">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-[#94A3B8]">search</span>
+<input class="w-full bg-[#F8F9FA] border border-[#E2E8F0] rounded-lg pl-8 pr-3 py-1.5 text-[13px] text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#527A9E] focus:bg-white transition-colors font-medium" id="queueSearchInput" placeholder="Search applicant name, ID, or doc type..." type="text" value="Priya Sharma">
+</div>
+<div class="flex flex-wrap items-center gap-2">
+<div class="relative">
+<button class="inline-flex items-center gap-1.5 bg-[#F8F9FA] hover:bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-[12px] text-[#0F172A] transition-colors" type="button">
+<span class="text-[#64748B]">Status:</span>
+<span class="font-medium">Pending Review (5)</span>
+<span class="material-symbols-outlined text-[15px] text-[#94A3B8]">expand_more</span>
+</button>
+</div>
+<div class="relative">
+<button class="inline-flex items-center gap-1.5 bg-[#F8F9FA] hover:bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-[12px] text-[#0F172A] transition-colors" type="button">
+<span class="text-[#64748B]">Doc Type:</span>
+<span class="font-medium">PAN Card</span>
+<span class="material-symbols-outlined text-[15px] text-[#94A3B8]">expand_more</span>
+</button>
+</div>
+<button class="inline-flex items-center gap-1 bg-[#F8F9FA] hover:bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-[12px] text-[#64748B] hover:text-[#0F172A] transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px]">tune</span>
+<span>Filters</span>
+</button>
+</div>
+</div>
+<!-- 3-Column Balanced Workspace -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+<!-- Column 1: Queue Ledger List (3 Cols) -->
+<div class="lg:col-span-3 bg-white border border-[#E2E8F0] rounded-lg shadow-xs overflow-hidden flex flex-col">
+<div class="px-4 py-3 border-b border-[#E2E8F0] bg-[#FAFAFA] flex items-center justify-between h-14">
+<div class="flex items-center gap-2">
+<span class="text-[20px] font-serif font-bold text-[#0F172A] tracking-tight" style="font-family: 'Newsreader', Georgia, serif;">Queue Ledger</span>
+<span class="text-[11px] px-2 py-0.5 bg-white border border-[#E2E8F0] rounded-full text-[#64748B] font-mono font-medium">5 pending</span>
+</div>
+<span class="text-[12px] text-[#64748B]">SLA: <span class="font-semibold text-[#0F172A]">Priority</span></span>
+</div>
+<div class="divide-y divide-[#E2E8F0]">
+<!-- Item 1: Active Selected -->
+<div class="p-4 bg-[#F0F5FA] border-l-2 border-l-[#527A9E] cursor-pointer transition-colors" id="item-APP-3091">
+<div class="flex items-start justify-between gap-2">
+<div>
+<div class="font-semibold text-[16px] text-[#0F172A] flex items-center gap-2 leading-snug">
+              Priya Sharma
+              <span class="w-2 h-2 rounded-full bg-[#E11D48]"></span>
+</div>
+<div class="text-[12px] font-mono text-[#64748B] mt-0.5">#APP-3091</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FFF1F2] text-[#9F1239] text-[11px] font-semibold border border-[#FECDD3]">
+            Discrepancy
+          </span>
+</div>
+<div class="flex items-center justify-between text-[12px] text-[#64748B] mt-2.5 pt-2 border-t border-[#E2E8F0]/60 font-sans">
+<span class="font-medium text-[#0F172A]">PAN Card</span>
+<span>18 Oct, 10:45 AM</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="p-4 hover:bg-[#F8F9FA] cursor-pointer transition-colors" id="item-APP-3085">
+<div class="flex items-start justify-between gap-2">
+<div>
+<div class="font-semibold text-[16px] text-[#0F172A] leading-snug">Rajesh Kumar Verma</div>
+<div class="text-[12px] font-mono text-[#64748B] mt-0.5">#APP-3085</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#F0F5FA] text-[#2C5282] text-[11px] font-semibold border border-[#CFE0F0]">
+            Pending Review
+          </span>
+</div>
+<div class="flex items-center justify-between text-[12px] text-[#64748B] mt-2.5 pt-2 border-t border-[#E2E8F0]/60 font-sans">
+<span class="text-[#64748B]">Aadhaar Card</span>
+<span>18 Oct, 10:20 AM</span>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="p-4 hover:bg-[#F8F9FA] cursor-pointer transition-colors" id="item-APP-3072">
+<div class="flex items-start justify-between gap-2">
+<div>
+<div class="font-semibold text-[16px] text-[#0F172A] leading-snug">Ananya Deshmukh</div>
+<div class="text-[12px] font-mono text-[#64748B] mt-0.5">#APP-3072</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#F0F5FA] text-[#2C5282] text-[11px] font-semibold border border-[#CFE0F0]">
+            Pending Review
+          </span>
+</div>
+<div class="flex items-center justify-between text-[12px] text-[#64748B] mt-2.5 pt-2 border-t border-[#E2E8F0]/60 font-sans">
+<span class="text-[#64748B]">Passport</span>
+<span>18 Oct, 09:15 AM</span>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="p-4 hover:bg-[#F8F9FA] cursor-pointer transition-colors" id="item-APP-3066">
+<div class="flex items-start justify-between gap-2">
+<div>
+<div class="font-semibold text-[16px] text-[#0F172A] leading-snug">Vikram Malhotra</div>
+<div class="text-[12px] font-mono text-[#64748B] mt-0.5">#APP-3066</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FFF1F2] text-[#9F1239] text-[11px] font-semibold border border-[#FECDD3]">
+            Discrepancy
+          </span>
+</div>
+<div class="flex items-center justify-between text-[12px] text-[#64748B] mt-2.5 pt-2 border-t border-[#E2E8F0]/60 font-sans">
+<span class="text-[#64748B]">Voter ID</span>
+<span>18 Oct, 08:50 AM</span>
+</div>
+</div>
+<!-- Item 5 -->
+<div class="p-4 hover:bg-[#F8F9FA] cursor-pointer transition-colors" id="item-APP-3058">
+<div class="flex items-start justify-between gap-2">
+<div>
+<div class="font-semibold text-[16px] text-[#0F172A] leading-snug">Meera Venkatesh</div>
+<div class="text-[12px] font-mono text-[#64748B] mt-0.5">#APP-3058</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] text-[11px] font-semibold border border-[#A7F3D0]">
+            Verified
+          </span>
+</div>
+<div class="flex items-center justify-between text-[12px] text-[#64748B] mt-2.5 pt-2 border-t border-[#E2E8F0]/60 font-sans">
+<span class="text-[#64748B]">Driving Licence</span>
+<span>17 Oct, 05:30 PM</span>
+</div>
+</div>
+</div>
+<div class="px-4 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-between text-[12px] text-[#64748B]">
+<span>Showing 5 of 42</span>
+<div class="flex items-center gap-1">
+<button class="px-2.5 py-1 border border-[#E2E8F0] rounded text-[#64748B] hover:bg-[#F8F9FA] font-medium">Prev</button>
+<span class="px-2.5 py-1 bg-[#111827] text-white rounded font-medium">1</span>
+<button class="px-2.5 py-1 border border-[#E2E8F0] rounded text-[#0F172A] hover:bg-[#F8F9FA] font-medium">Next</button>
+</div>
+</div>
+</div>
+<!-- Column 2: Document Inspection Canvas (5 Cols) -->
+<div class="lg:col-span-5 bg-white border border-[#E2E8F0] rounded-lg shadow-xs overflow-hidden flex flex-col">
+<div class="px-4 py-3 border-b border-[#E2E8F0] bg-[#FAFAFA] flex items-center justify-between h-14">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[19px] text-[#527A9E]">badge</span>
+<span class="font-serif text-[20px] font-bold text-[#0F172A] tracking-tight" style="font-family: 'Newsreader', Georgia, serif;">PAN Card Preview<span class="italic font-medium text-[#527A9E]">.</span></span>
+<span class="text-[11px] px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] font-semibold border border-[#A7F3D0]">Original Scan</span>
+</div>
+<!-- Minimal Zoom Controls -->
+<div class="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg">
+<button class="w-7 h-7 flex items-center justify-center rounded text-[#64748B] hover:text-[#0F172A] hover:bg-white transition-colors" title="Zoom in" type="button">
+<span class="material-symbols-outlined text-[17px]">zoom_in</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded text-[#64748B] hover:text-[#0F172A] hover:bg-white transition-colors" title="Zoom out" type="button">
+<span class="material-symbols-outlined text-[17px]">zoom_out</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded text-[#64748B] hover:text-[#0F172A] hover:bg-white transition-colors" title="Fit Screen" type="button">
+<span class="material-symbols-outlined text-[17px]">fit_screen</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded text-[#64748B] hover:text-[#0F172A] hover:bg-white transition-colors" title="Rotate" type="button">
+<span class="material-symbols-outlined text-[17px]">rotate_right</span>
+</button>
+</div>
+</div>
+<!-- Main Document Display -->
+<div class="p-5 bg-[#F8F9FA] flex items-center justify-center min-h-[420px]">
+<div class="w-full max-w-[430px] aspect-[1.586/1] bg-gradient-to-br from-[#dbeafe] via-[#eff6ff] to-[#bfdbfe] border border-[#CBD5E1] rounded-lg p-4 shadow-sm flex flex-col justify-between relative select-none overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none flex items-center justify-center">
+<span class="material-symbols-outlined text-[180px] text-[#1E293B]">account_balance</span>
+</div>
+<div class="relative z-10 flex items-start justify-between border-b border-[#CBD5E1]/60 pb-1.5">
+<span class="text-[11px] leading-tight font-bold tracking-tight text-[#0F172A] uppercase">INCOME TAX DEPARTMENT</span>
+<span class="text-[10px] leading-tight font-bold text-[#0F172A] uppercase">GOVT. OF INDIA</span>
+</div>
+<div class="relative z-10 grid grid-cols-12 gap-3 my-auto items-center">
+<div class="col-span-4 flex flex-col items-center">
+<div class="w-20 h-24 bg-white rounded border border-[#CBD5E1] overflow-hidden shadow-xs">
+<img alt="Portrait" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCz0phI6alYKW1dItg4E5lO1FcjPKuSWiApiqjdJWusTkhUNsc2LqAo3FDzBRkyhf-GXm074wtW81aduKurEOpMhI6n5hjVdoUBWuJ7dXnS3f0ZERvfCO0B_VODYwMzFg50x6rHsLtdLSRLNVzEMamyS4n1RGDmftvZFDuKEm5sZ6e8HgCr1yP6c3GleZ7xRvrqZ24kjPZAiRMnVCU9OLajt17rstJ2p_0VWKCsBHo">
+</div>
+</div>
+<div class="col-span-8 flex flex-col gap-2 pl-1">
+<div>
+<div class="text-[9px] uppercase font-bold text-[#64748B] leading-none">Name</div>
+<div class="text-[14px] font-bold text-[#0F172A] tracking-wide leading-tight mt-0.5">PRIYA SHARMA</div>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div>
+<div class="text-[9px] uppercase font-bold text-[#64748B] leading-none">DOB</div>
+<div class="font-mono text-[11px] font-semibold text-[#0F172A] mt-0.5">14/08/1992</div>
+</div>
+<div>
+<div class="text-[9px] uppercase font-bold text-[#64748B] leading-none">PAN</div>
+<div class="font-mono text-[11px] font-semibold text-[#0F172A] mt-0.5">ABCPS••••K</div>
+</div>
+</div>
+</div>
+</div>
+<div class="relative z-10 flex items-end justify-between pt-1 border-t border-[#CBD5E1]/60">
+<div class="flex flex-col">
+<div class="w-28 h-6 bg-white rounded flex items-center justify-center px-1 shadow-inner border border-[#CBD5E1]">
+<span class="italic font-serif text-[11px] text-[#0F172A] font-semibold tracking-wider">Priya Sharma</span>
+</div>
+<span class="text-[8px] text-[#64748B] uppercase mt-0.5 font-medium">Holder's Signature</span>
+</div>
+<span class="text-[9px] font-mono text-[#64748B]">PERMANENT ACCOUNT CARD</span>
+</div>
+</div>
+</div>
+<div class="px-4 py-2 border-t border-[#E2E8F0] bg-white flex items-center justify-between text-[11px] text-[#64748B]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[17px] text-[#94A3B8]">image</span>
+<span class="font-mono font-medium text-[12px] text-[#0F172A]">priya_sharma_pan.jpg</span>
+</div>
+<span class="text-[12px] text-[#64748B]">Confidence: <strong class="text-[#0F172A] font-mono text-[13px]">99.4%</strong></span>
+</div>
+</div>
+<!-- Column 3: Extracted Document Data & Discrepancy (4 Cols) -->
+<div class="lg:col-span-4 bg-white border border-[#E2E8F0] rounded-lg shadow-xs overflow-hidden flex flex-col">
+<div class="px-4 py-3 border-b border-[#E2E8F0] bg-[#FAFAFA] flex items-center justify-between h-14">
+<div class="flex items-center gap-2.5">
+<span class="font-serif text-[20px] font-bold text-[#0F172A] tracking-tight" style="font-family: 'Newsreader', Georgia, serif;">
+Extracted Document Data<span class="italic font-medium text-[#527A9E]">.</span>
+</span>
+</div>
+<div class="flex items-center gap-1.5 shrink-0">
+<span class="font-mono text-[11px] text-[#64748B] font-medium">#APP-3091</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FFF1F2] text-[#9F1239] text-[11px] font-semibold border border-[#FECDD3]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#E11D48]"></span>
+Requires Attention
+</span>
+</div>
+</div>
+<div class="p-5 space-y-4">
+<p class="text-[13px] text-[#64748B] leading-relaxed font-sans">
+Verify extracted OCR values against the uploaded scan and cross-check with database records.
+</p>
+<!-- Form Fields Grid -->
+<div class="space-y-3.5 font-sans">
+<!-- Full Legal Name -->
+<div>
+<div class="flex items-center justify-between mb-1">
+<label class="text-[13px] font-medium text-[#1E293B]">1. Full Legal Name</label>
+<span class="text-[11px] font-semibold text-[#065F46] flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Matches
+</span>
+</div>
+<input class="w-full px-3.5 py-2 bg-[#F8F9FA] border border-[#E2E8F0] rounded-lg text-[15px] text-[#0F172A] focus:outline-none focus:border-[#527A9E] focus:bg-white transition-colors font-medium" type="text" value="Priya Sharma">
+</div>
+<!-- Document ID (PAN) -->
+<div>
+<div class="flex items-center justify-between mb-1">
+<label class="text-[13px] font-medium text-[#1E293B]">2. Document ID (PAN)</label>
+<span class="text-[11px] font-semibold text-[#065F46] flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Valid Format
+</span>
+</div>
+<div class="relative flex items-center">
+<input class="w-full pl-3.5 pr-9 py-2 bg-[#F8F9FA] border border-[#E2E8F0] rounded-lg font-mono text-[15px] font-semibold text-[#0F172A] focus:outline-none focus:border-[#527A9E] focus:bg-white transition-colors" type="text" value="ABCPS••••K">
+<span class="material-symbols-outlined absolute right-3 text-[17px] text-[#94A3B8] cursor-pointer hover:text-[#0F172A]">visibility</span>
+</div>
+</div>
+<!-- DOB & Gender in 2 Cols -->
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="text-[13px] font-medium text-[#1E293B] block mb-1">3. Date of Birth</label>
+<input class="w-full px-3.5 py-2 bg-[#F8F9FA] border border-[#E2E8F0] rounded-lg font-mono text-[15px] font-semibold text-[#0F172A] focus:outline-none focus:border-[#527A9E] focus:bg-white transition-colors" type="text" value="14/08/1992">
+</div>
+<div>
+<label class="text-[13px] font-medium text-[#1E293B] block mb-1">4. Gender</label>
+<select class="w-full px-3.5 py-2 bg-[#F8F9FA] border border-[#E2E8F0] rounded-lg text-[15px] font-medium text-[#0F172A] focus:outline-none focus:border-[#527A9E] focus:bg-white transition-colors">
+<option selected="">Female</option>
+<option>Male</option>
+<option>Other</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Compact Refined Discrepancy Box -->
+<div class="p-3 bg-[#FFF1F2] border border-[#FECDD3] rounded-lg space-y-2 text-[12px]">
+<div class="flex items-center gap-1.5 text-[#9F1239] font-semibold text-[13px]">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+Cross-Document Discrepancy
+</div>
+<div class="grid grid-cols-2 gap-2 text-[13px] font-mono py-1.5 border-y border-[#FECDD3]">
+<div>
+<span class="text-[#9F1239] text-[10px] block uppercase font-sans font-semibold tracking-wide">PAN Card:</span>
+<strong class="text-[#0F172A] font-semibold">"Priya Sharma"</strong>
+</div>
+<div>
+<span class="text-[#9F1239] text-[10px] block uppercase font-sans font-semibold tracking-wide">Aadhaar OCR:</span>
+<strong class="text-[#0F172A] font-semibold">"Priya Sarma"</strong>
+</div>
+</div>
+<p class="text-[#4C0519] text-[12px] leading-relaxed">
+1 character variance (missing 'h'). Review officer confirmation needed before identity seal.
+</p>
+</div>
+<!-- Verification Remarks -->
+<div>
+<label class="text-[13px] font-medium text-[#1E293B] block mb-1">Verification Remarks / Notes</label>
+<textarea class="w-full p-2.5 bg-[#F8F9FA] border border-[#E2E8F0] rounded-lg text-[13px] text-[#0F172A] focus:outline-none focus:border-[#527A9E] focus:bg-white transition-colors resize-none leading-relaxed" rows="2">Transliteration variance noted between Aadhaar (Priya Sarma) and PAN (Priya Sharma). Photo record confirmed identical.</textarea>
+</div>
+<!-- Action Footer -->
+<div class="space-y-2 pt-2 border-t border-[#E2E8F0]">
+<button class="w-full py-2.5 px-4 bg-[#111827] hover:bg-[#1E293B] text-white text-[14px] font-semibold rounded-lg transition-colors shadow-xs flex items-center justify-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+Mark as Verified
+</button>
+<div class="flex items-center gap-2">
+<button class="flex-1 py-2 px-3 bg-white border border-[#E2E8F0] hover:bg-[#F8F9FA] text-[#0F172A] text-[13px] font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px] text-[#64748B]">restart_alt</span>
+Request Re-upload
+</button>
+<button class="flex-1 py-2 px-3 bg-white border border-[#E2E8F0] hover:bg-[#F8F9FA] text-[#64748B] hover:text-[#0F172A] text-[13px] font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px] text-[#64748B]">flag</span>
+Flag for Review
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></main><footer class="w-full bg-white border-t border-[#E2E8F0] mt-8 py-3"><div class="max-w-[1720px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[#64748B] text-[11px]">
+<div>Document Verification System · Internal Operations</div>
+<div class="font-mono text-[#94A3B8]">Confidential · Demo records</div>
+</div></footer>
+
+</body></html>

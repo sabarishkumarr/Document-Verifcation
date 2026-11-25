@@ -1,0 +1,2104 @@
+{
+  "dataset": {
+    "name": "VeriDoc AI - Synthetic KYC Test Dataset",
+    "version": "1.0",
+    "generated_on": "2026-11-23",
+    "reference_date_for_expiry_checks": "2026-11-23",
+    "disclaimer": "ALL DATA IS FICTIONAL. Every image/PDF is watermarked SYNTHETIC / NOT VALID FOR IDENTIFICATION. Identifier values are reserved sentinel patterns that cannot be valid real-world IDs.",
+    "synthetic_identifier_rules": {
+      "aadhaar": "^0000 \\d{4} \\d{4}$",
+      "pan": "^SYNP[A-Z]0000[A-Z]$",
+      "passport": "^Z000\\d{4}$",
+      "voter_id": "^ZZZ0000\\d{3}$",
+      "driving_licence": "^[A-Z]{2}\\d{2} 0000 \\d{7}$"
+    },
+    "conventions": {
+      "expected_fields": "Correct, normalised truth (ISO dates, title-case names).",
+      "rendered_fields": "Exact strings printed on the image, incl. deliberate errors. OCR should reproduce these.",
+      "name_comparison": "Compare case-insensitively; PAN/Passport/DL print names in UPPERCASE."
+    }
+  },
+  "applicants": [
+    {
+      "applicant_id": "APP001",
+      "folder": "applicant_01_arvind_iyer",
+      "profile_type": "normal",
+      "canonical_profile": {
+        "full_name": "Arvind Raghunathan Iyer",
+        "dob": "1988-03-14",
+        "gender": "M",
+        "father_name": "Raghunathan Subramanian Iyer",
+        "mother_name": "Lalitha Raghunathan Iyer",
+        "place_of_birth": "Chennai",
+        "address": {
+          "l1": "Flat 4B, Sample Residency",
+          "l2": "17 Lotus Garden Street, Adyar",
+          "city": "Chennai",
+          "state": "Tamil Nadu",
+          "pin": "600020"
+        },
+        "address_full": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020"
+      },
+      "portrait_source": "applicant_01_arvind_iyer/portrait_source.png",
+      "documents": {
+        "aadhaar": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_01_arvind_iyer/aadhaar/aadhaar_front.png",
+            "applicant_01_arvind_iyer/aadhaar/aadhaar_back.png",
+            "applicant_01_arvind_iyer/aadhaar/aadhaar.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_01_arvind_iyer/aadhaar/aadhaar_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_01_arvind_iyer/aadhaar/aadhaar_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_01_arvind_iyer/aadhaar/aadhaar.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "name": "Arvind Raghunathan Iyer",
+            "dob": "1988-03-14",
+            "gender": "Male",
+            "aadhaar_number": "0000 4821 7305",
+            "care_of": "S/O Raghunathan Subramanian Iyer",
+            "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020"
+          },
+          "rendered_fields": {
+            "name": "Arvind Raghunathan Iyer",
+            "dob": "14/03/1988",
+            "gender": "Male",
+            "aadhaar_number": "0000 4821 7305",
+            "care_of": "S/O Raghunathan Subramanian Iyer",
+            "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "pan": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_01_arvind_iyer/pan/pan_front.png",
+            "applicant_01_arvind_iyer/pan/pan.pdf",
+            "applicant_01_arvind_iyer/pan/pan_front_degraded.jpg",
+            "applicant_01_arvind_iyer/pan/pan_degraded.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_01_arvind_iyer/pan/pan_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_01_arvind_iyer/pan/pan.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            },
+            {
+              "file": "applicant_01_arvind_iyer/pan/pan_front_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 80,
+              "degradations": [
+                {
+                  "op": "perspective",
+                  "strength": 0.05
+                },
+                {
+                  "op": "rotate",
+                  "deg": 8
+                },
+                {
+                  "op": "shadow",
+                  "strength": 0.35
+                },
+                {
+                  "op": "noise",
+                  "sigma": 6
+                }
+              ],
+              "suggested_fix": [
+                "perspective",
+                "rotate",
+                "shadow",
+                "noise"
+              ]
+            },
+            {
+              "file": "applicant_01_arvind_iyer/pan/pan_degraded.pdf",
+              "quality": "degraded",
+              "degradations": [
+                {
+                  "op": "perspective",
+                  "strength": 0.05
+                },
+                {
+                  "op": "rotate",
+                  "deg": 8
+                },
+                {
+                  "op": "shadow",
+                  "strength": 0.35
+                },
+                {
+                  "op": "noise",
+                  "sigma": 6
+                }
+              ],
+              "note": "PDF built from degraded images"
+            }
+          ],
+          "expected_fields": {
+            "pan_number": "SYNPI0000A",
+            "name": "Arvind Raghunathan Iyer",
+            "father_name": "Raghunathan Subramanian Iyer",
+            "dob": "1988-03-14"
+          },
+          "rendered_fields": {
+            "pan_number": "SYNPI0000A",
+            "name": "ARVIND RAGHUNATHAN IYER",
+            "father_name": "RAGHUNATHAN SUBRAMANIAN IYER",
+            "dob": "14/03/1988"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "passport": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_01_arvind_iyer/passport/passport_front.png",
+            "applicant_01_arvind_iyer/passport/passport_address_page.png",
+            "applicant_01_arvind_iyer/passport/passport.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_01_arvind_iyer/passport/passport_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_01_arvind_iyer/passport/passport_address_page.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_01_arvind_iyer/passport/passport.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "passport_number": "Z0001001",
+            "surname": "Iyer",
+            "given_names": "Arvind Raghunathan",
+            "nationality": "INDIAN",
+            "sex": "M",
+            "dob": "1988-03-14",
+            "place_of_birth": "CHENNAI",
+            "place_of_issue": "CHENNAI",
+            "date_of_issue": "2019-06-18",
+            "date_of_expiry": "2029-06-17",
+            "father_name": "Raghunathan Subramanian Iyer",
+            "mother_name": "Lalitha Raghunathan Iyer",
+            "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020",
+            "mrz_line1": "P<INDIYER<<ARVIND<RAGHUNATHAN<<<<<<<<<<<<<<<",
+            "mrz_line2": "Z0001001<1IND8803148M2906173<<<<<<<<<<<<<<04"
+          },
+          "rendered_fields": {
+            "passport_number": "Z0001001",
+            "surname": "IYER",
+            "given_names": "ARVIND RAGHUNATHAN",
+            "nationality": "INDIAN",
+            "sex": "M",
+            "dob": "14/03/1988",
+            "place_of_birth": "CHENNAI",
+            "place_of_issue": "CHENNAI",
+            "date_of_issue": "18/06/2019",
+            "date_of_expiry": "17/06/2029",
+            "father_name": "RAGHUNATHAN SUBRAMANIAN IYER",
+            "mother_name": "LALITHA RAGHUNATHAN IYER",
+            "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020",
+            "mrz_line1": "P<INDIYER<<ARVIND<RAGHUNATHAN<<<<<<<<<<<<<<<",
+            "mrz_line2": "Z0001001<1IND8803148M2906173<<<<<<<<<<<<<<04"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "expiry_date": "2029-06-17",
+            "is_expired_on_reference_date": false,
+            "missing_fields": []
+          }
+        },
+        "voter_id": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_01_arvind_iyer/voter_id/voter_id_front.jpg",
+            "applicant_01_arvind_iyer/voter_id/voter_id_back.jpg",
+            "applicant_01_arvind_iyer/voter_id/voter_id.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_01_arvind_iyer/voter_id/voter_id_front.jpg",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_01_arvind_iyer/voter_id/voter_id_back.jpg",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_01_arvind_iyer/voter_id/voter_id.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "epic_number": "ZZZ0000101",
+            "name": "Arvind Raghunathan Iyer",
+            "relation_type": "Father",
+            "relation_name": "Raghunathan Subramanian Iyer",
+            "gender": "Male",
+            "dob": "1988-03-14",
+            "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020",
+            "assembly_constituency": "Test Constituency 021 (Chennai South)",
+            "part_number": "45"
+          },
+          "rendered_fields": {
+            "epic_number": "ZZZ0000101",
+            "name": "Arvind Raghunathan Iyer",
+            "relation_type": "Father",
+            "relation_name": "Raghunathan Subramanian Iyer",
+            "gender": "Male",
+            "dob": "14/03/1988",
+            "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020",
+            "assembly_constituency": "Test Constituency 021 (Chennai South)",
+            "part_number": "45"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "driving_licence": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_01_arvind_iyer/driving_licence/driving_licence_front.png",
+            "applicant_01_arvind_iyer/driving_licence/driving_licence_back.png",
+            "applicant_01_arvind_iyer/driving_licence/driving_licence.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_01_arvind_iyer/driving_licence/driving_licence_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_01_arvind_iyer/driving_licence/driving_licence_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_01_arvind_iyer/driving_licence/driving_licence.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "dl_number": "TN07 0000 0004417",
+            "name": "Arvind Raghunathan Iyer",
+            "guardian_name": "S/O RAGHUNATHAN SUBRAMANIAN IYER",
+            "dob": "1988-03-14",
+            "blood_group": "B+",
+            "address": "FLAT 4B, SAMPLE RESIDENCY, 17 LOTUS GARDEN STREET, ADYAR, CHENNAI, TAMIL NADU - 600020",
+            "issue_date": "2008-04-02",
+            "valid_till": "2028-04-01",
+            "vehicle_classes": "MCWG, LMV",
+            "issuing_authority": "RTO CHENNAI (TN07)"
+          },
+          "rendered_fields": {
+            "dl_number": "TN07 0000 0004417",
+            "name": "ARVIND RAGHUNATHAN IYER",
+            "guardian_name": "S/O RAGHUNATHAN SUBRAMANIAN IYER",
+            "dob": "14/03/1988",
+            "blood_group": "B+",
+            "address": "FLAT 4B, SAMPLE RESIDENCY, 17 LOTUS GARDEN STREET, ADYAR, CHENNAI, TAMIL NADU - 600020",
+            "issue_date": "02/04/2008",
+            "valid_till": "01/04/2028",
+            "vehicle_classes": "MCWG, LMV",
+            "issuing_authority": "RTO CHENNAI (TN07)"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "expiry_date": "2028-04-01",
+            "is_expired_on_reference_date": false,
+            "missing_fields": []
+          }
+        }
+      },
+      "cross_document_expectations": {
+        "name_consistent": true,
+        "dob_consistent": true,
+        "address_consistent": true,
+        "names_as_printed": {
+          "aadhaar": "Arvind Raghunathan Iyer",
+          "pan": "ARVIND RAGHUNATHAN IYER",
+          "passport": "ARVIND RAGHUNATHAN IYER",
+          "voter_id": "Arvind Raghunathan Iyer",
+          "driving_licence": "ARVIND RAGHUNATHAN IYER"
+        },
+        "dobs_as_printed": {
+          "aadhaar": "14/03/1988",
+          "pan": "14/03/1988",
+          "passport": "14/03/1988",
+          "voter_id": "14/03/1988",
+          "driving_licence": "14/03/1988"
+        },
+        "expected_flags": [],
+        "expected_decision": "PASS"
+      }
+    },
+    {
+      "applicant_id": "APP002",
+      "folder": "applicant_02_meera_pillai",
+      "profile_type": "normal",
+      "canonical_profile": {
+        "full_name": "Meera Sundaram Pillai",
+        "dob": "1993-11-02",
+        "gender": "F",
+        "father_name": "Sundaram Krishnan Pillai",
+        "mother_name": "Janaki Sundaram Pillai",
+        "place_of_birth": "Bengaluru",
+        "address": {
+          "l1": "No. 221, Fictional Heights",
+          "l2": "5th Cross, Indiranagar",
+          "city": "Bengaluru",
+          "state": "Karnataka",
+          "pin": "560038"
+        },
+        "address_full": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038"
+      },
+      "portrait_source": "applicant_02_meera_pillai/portrait_source.png",
+      "documents": {
+        "aadhaar": {
+          "layout_variant": 1,
+          "files": [
+            "applicant_02_meera_pillai/aadhaar/aadhaar_front.png",
+            "applicant_02_meera_pillai/aadhaar/aadhaar_back.png",
+            "applicant_02_meera_pillai/aadhaar/aadhaar.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_02_meera_pillai/aadhaar/aadhaar_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_02_meera_pillai/aadhaar/aadhaar_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_02_meera_pillai/aadhaar/aadhaar.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "name": "Meera Sundaram Pillai",
+            "dob": "1993-11-02",
+            "gender": "Female",
+            "aadhaar_number": "0000 6174 2093",
+            "care_of": "D/O Sundaram Krishnan Pillai",
+            "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038"
+          },
+          "rendered_fields": {
+            "name": "Meera Sundaram Pillai",
+            "dob": "02/11/1993",
+            "gender": "Female",
+            "aadhaar_number": "0000 6174 2093",
+            "care_of": "D/O Sundaram Krishnan Pillai",
+            "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "pan": {
+          "layout_variant": 1,
+          "files": [
+            "applicant_02_meera_pillai/pan/pan_front.jpg",
+            "applicant_02_meera_pillai/pan/pan.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_02_meera_pillai/pan/pan_front.jpg",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_02_meera_pillai/pan/pan.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "pan_number": "SYNPP0000B",
+            "name": "Meera Sundaram Pillai",
+            "father_name": "Sundaram Krishnan Pillai",
+            "dob": "1993-11-02"
+          },
+          "rendered_fields": {
+            "pan_number": "SYNPP0000B",
+            "name": "MEERA SUNDARAM PILLAI",
+            "father_name": "SUNDARAM KRISHNAN PILLAI",
+            "dob": "02/11/1993"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "passport": {
+          "layout_variant": 1,
+          "files": [
+            "applicant_02_meera_pillai/passport/passport_front.png",
+            "applicant_02_meera_pillai/passport/passport_address_page.png",
+            "applicant_02_meera_pillai/passport/passport.pdf",
+            "applicant_02_meera_pillai/passport/passport_front_degraded.jpg",
+            "applicant_02_meera_pillai/passport/passport_address_page_degraded.jpg",
+            "applicant_02_meera_pillai/passport/passport_degraded.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_02_meera_pillai/passport/passport_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_02_meera_pillai/passport/passport_address_page.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_02_meera_pillai/passport/passport.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            },
+            {
+              "file": "applicant_02_meera_pillai/passport/passport_front_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 70,
+              "degradations": [
+                {
+                  "op": "gblur",
+                  "sigma": 2.4
+                },
+                {
+                  "op": "lowres",
+                  "scale": 0.45
+                }
+              ],
+              "suggested_fix": [
+                "gblur",
+                "lowres"
+              ]
+            },
+            {
+              "file": "applicant_02_meera_pillai/passport/passport_address_page_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 70,
+              "degradations": [
+                {
+                  "op": "gblur",
+                  "sigma": 2.4
+                },
+                {
+                  "op": "lowres",
+                  "scale": 0.45
+                }
+              ],
+              "suggested_fix": [
+                "gblur",
+                "lowres"
+              ]
+            },
+            {
+              "file": "applicant_02_meera_pillai/passport/passport_degraded.pdf",
+              "quality": "degraded",
+              "degradations": [
+                {
+                  "op": "gblur",
+                  "sigma": 2.4
+                },
+                {
+                  "op": "lowres",
+                  "scale": 0.45
+                }
+              ],
+              "note": "PDF built from degraded images"
+            }
+          ],
+          "expected_fields": {
+            "passport_number": "Z0001002",
+            "surname": "Pillai",
+            "given_names": "Meera Sundaram",
+            "nationality": "INDIAN",
+            "sex": "F",
+            "dob": "1993-11-02",
+            "place_of_birth": "BENGALURU",
+            "place_of_issue": "BENGALURU",
+            "date_of_issue": "2021-02-11",
+            "date_of_expiry": "2031-02-10",
+            "father_name": "Sundaram Krishnan Pillai",
+            "mother_name": "Janaki Sundaram Pillai",
+            "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038",
+            "mrz_line1": "P<INDPILLAI<<MEERA<SUNDARAM<<<<<<<<<<<<<<<<<",
+            "mrz_line2": "Z0001002<4IND9311022F3102101<<<<<<<<<<<<<<02"
+          },
+          "rendered_fields": {
+            "passport_number": "Z0001002",
+            "surname": "PILLAI",
+            "given_names": "MEERA SUNDARAM",
+            "nationality": "INDIAN",
+            "sex": "F",
+            "dob": "02/11/1993",
+            "place_of_birth": "BENGALURU",
+            "place_of_issue": "BENGALURU",
+            "date_of_issue": "11/02/2021",
+            "date_of_expiry": "10/02/2031",
+            "father_name": "SUNDARAM KRISHNAN PILLAI",
+            "mother_name": "JANAKI SUNDARAM PILLAI",
+            "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038",
+            "mrz_line1": "P<INDPILLAI<<MEERA<SUNDARAM<<<<<<<<<<<<<<<<<",
+            "mrz_line2": "Z0001002<4IND9311022F3102101<<<<<<<<<<<<<<02"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "expiry_date": "2031-02-10",
+            "is_expired_on_reference_date": false,
+            "missing_fields": []
+          }
+        },
+        "voter_id": {
+          "layout_variant": 1,
+          "files": [
+            "applicant_02_meera_pillai/voter_id/voter_id_front.png",
+            "applicant_02_meera_pillai/voter_id/voter_id_back.png",
+            "applicant_02_meera_pillai/voter_id/voter_id.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_02_meera_pillai/voter_id/voter_id_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_02_meera_pillai/voter_id/voter_id_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_02_meera_pillai/voter_id/voter_id.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "epic_number": "ZZZ0000102",
+            "name": "Meera Sundaram Pillai",
+            "relation_type": "Father",
+            "relation_name": "Sundaram Krishnan Pillai",
+            "gender": "Female",
+            "dob": "1993-11-02",
+            "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038",
+            "assembly_constituency": "Test Constituency 154 (Bengaluru East)",
+            "part_number": "112"
+          },
+          "rendered_fields": {
+            "epic_number": "ZZZ0000102",
+            "name": "Meera Sundaram Pillai",
+            "relation_type": "Father",
+            "relation_name": "Sundaram Krishnan Pillai",
+            "gender": "Female",
+            "dob": "02/11/1993",
+            "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038",
+            "assembly_constituency": "Test Constituency 154 (Bengaluru East)",
+            "part_number": "112"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "driving_licence": {
+          "layout_variant": 1,
+          "files": [
+            "applicant_02_meera_pillai/driving_licence/driving_licence_front.png",
+            "applicant_02_meera_pillai/driving_licence/driving_licence_back.png",
+            "applicant_02_meera_pillai/driving_licence/driving_licence.pdf",
+            "applicant_02_meera_pillai/driving_licence/driving_licence_front_degraded.jpg",
+            "applicant_02_meera_pillai/driving_licence/driving_licence_back_degraded.jpg",
+            "applicant_02_meera_pillai/driving_licence/driving_licence_degraded.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_02_meera_pillai/driving_licence/driving_licence_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_02_meera_pillai/driving_licence/driving_licence_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_02_meera_pillai/driving_licence/driving_licence.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            },
+            {
+              "file": "applicant_02_meera_pillai/driving_licence/driving_licence_front_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 22,
+              "degradations": [
+                {
+                  "op": "lowcontrast",
+                  "alpha": 0.6,
+                  "beta": 45
+                },
+                {
+                  "op": "noise",
+                  "sigma": 14
+                }
+              ],
+              "suggested_fix": [
+                "lowcontrast",
+                "noise"
+              ]
+            },
+            {
+              "file": "applicant_02_meera_pillai/driving_licence/driving_licence_back_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 22,
+              "degradations": [
+                {
+                  "op": "lowcontrast",
+                  "alpha": 0.6,
+                  "beta": 45
+                },
+                {
+                  "op": "noise",
+                  "sigma": 14
+                }
+              ],
+              "suggested_fix": [
+                "lowcontrast",
+                "noise"
+              ]
+            },
+            {
+              "file": "applicant_02_meera_pillai/driving_licence/driving_licence_degraded.pdf",
+              "quality": "degraded",
+              "degradations": [
+                {
+                  "op": "lowcontrast",
+                  "alpha": 0.6,
+                  "beta": 45
+                },
+                {
+                  "op": "noise",
+                  "sigma": 14
+                }
+              ],
+              "note": "PDF built from degraded images"
+            }
+          ],
+          "expected_fields": {
+            "dl_number": "KA03 0000 0007720",
+            "name": "Meera Sundaram Pillai",
+            "guardian_name": "D/O SUNDARAM KRISHNAN PILLAI",
+            "dob": "1993-11-02",
+            "blood_group": "O+",
+            "address": "NO. 221, FICTIONAL HEIGHTS, 5TH CROSS, INDIRANAGAR, BENGALURU, KARNATAKA - 560038",
+            "issue_date": "2012-01-20",
+            "valid_till": "2032-01-19",
+            "vehicle_classes": "MCWG, LMV",
+            "issuing_authority": "RTO BENGALURU (KA03)"
+          },
+          "rendered_fields": {
+            "dl_number": "KA03 0000 0007720",
+            "name": "MEERA SUNDARAM PILLAI",
+            "guardian_name": "D/O SUNDARAM KRISHNAN PILLAI",
+            "dob": "02/11/1993",
+            "blood_group": "O+",
+            "address": "NO. 221, FICTIONAL HEIGHTS, 5TH CROSS, INDIRANAGAR, BENGALURU, KARNATAKA - 560038",
+            "issue_date": "20/01/2012",
+            "valid_till": "19/01/2032",
+            "vehicle_classes": "MCWG, LMV",
+            "issuing_authority": "RTO BENGALURU (KA03)"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "expiry_date": "2032-01-19",
+            "is_expired_on_reference_date": false,
+            "missing_fields": []
+          }
+        }
+      },
+      "cross_document_expectations": {
+        "name_consistent": true,
+        "dob_consistent": true,
+        "address_consistent": true,
+        "names_as_printed": {
+          "aadhaar": "Meera Sundaram Pillai",
+          "pan": "MEERA SUNDARAM PILLAI",
+          "passport": "MEERA SUNDARAM PILLAI",
+          "voter_id": "Meera Sundaram Pillai",
+          "driving_licence": "MEERA SUNDARAM PILLAI"
+        },
+        "dobs_as_printed": {
+          "aadhaar": "02/11/1993",
+          "pan": "02/11/1993",
+          "passport": "02/11/1993",
+          "voter_id": "02/11/1993",
+          "driving_licence": "02/11/1993"
+        },
+        "expected_flags": [],
+        "expected_decision": "PASS"
+      }
+    },
+    {
+      "applicant_id": "APP003",
+      "folder": "applicant_03_rohan_deshmukh",
+      "profile_type": "contains_errors",
+      "canonical_profile": {
+        "full_name": "Rohan Kishor Deshmukh",
+        "dob": "1991-02-27",
+        "gender": "M",
+        "father_name": "Kishor Anant Deshmukh",
+        "mother_name": "Sunita Kishor Deshmukh",
+        "place_of_birth": "Pune",
+        "address": {
+          "l1": "B-304, Demo Park Apartments",
+          "l2": "Kothrud Road",
+          "city": "Pune",
+          "state": "Maharashtra",
+          "pin": "411038"
+        },
+        "address_full": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038"
+      },
+      "portrait_source": "applicant_03_rohan_deshmukh/portrait_source.png",
+      "documents": {
+        "aadhaar": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_03_rohan_deshmukh/aadhaar/aadhaar_front.png",
+            "applicant_03_rohan_deshmukh/aadhaar/aadhaar_back.png",
+            "applicant_03_rohan_deshmukh/aadhaar/aadhaar.pdf",
+            "applicant_03_rohan_deshmukh/aadhaar/aadhaar_front_degraded.jpg",
+            "applicant_03_rohan_deshmukh/aadhaar/aadhaar_back_degraded.jpg",
+            "applicant_03_rohan_deshmukh/aadhaar/aadhaar_degraded.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_03_rohan_deshmukh/aadhaar/aadhaar_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/aadhaar/aadhaar_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/aadhaar/aadhaar.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/aadhaar/aadhaar_front_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 80,
+              "degradations": [
+                {
+                  "op": "motion",
+                  "k": 19,
+                  "deg": 15
+                },
+                {
+                  "op": "noise",
+                  "sigma": 5
+                }
+              ],
+              "suggested_fix": [
+                "motion",
+                "noise"
+              ]
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/aadhaar/aadhaar_back_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 80,
+              "degradations": [
+                {
+                  "op": "motion",
+                  "k": 19,
+                  "deg": 15
+                },
+                {
+                  "op": "noise",
+                  "sigma": 5
+                }
+              ],
+              "suggested_fix": [
+                "motion",
+                "noise"
+              ]
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/aadhaar/aadhaar_degraded.pdf",
+              "quality": "degraded",
+              "degradations": [
+                {
+                  "op": "motion",
+                  "k": 19,
+                  "deg": 15
+                },
+                {
+                  "op": "noise",
+                  "sigma": 5
+                }
+              ],
+              "note": "PDF built from degraded images"
+            }
+          ],
+          "expected_fields": {
+            "name": "Rohan Kishor Deshmukh",
+            "dob": "1991-02-27",
+            "gender": "Male",
+            "aadhaar_number": "0000 7731 8254",
+            "care_of": "S/O Kishor Anant Deshmukh",
+            "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038"
+          },
+          "rendered_fields": {
+            "name": "Rohan Kishor Deshmukh",
+            "dob": "27/02/1991",
+            "gender": "Male",
+            "aadhaar_number": "0000 7731 825",
+            "care_of": "S/O Kishor Anant Deshmukh",
+            "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038"
+          },
+          "intentional_errors": [
+            {
+              "field": "aadhaar_number",
+              "error_type": "invalid_id_format",
+              "printed_value": "0000 7731 825",
+              "correct_value": "0000 7731 8254",
+              "description": "Aadhaar number has only 11 digits (should be 12)."
+            }
+          ],
+          "validation": {
+            "id_matches_synthetic_pattern": false,
+            "missing_fields": []
+          }
+        },
+        "pan": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_03_rohan_deshmukh/pan/pan_front.png",
+            "applicant_03_rohan_deshmukh/pan/pan.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_03_rohan_deshmukh/pan/pan_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/pan/pan.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "pan_number": "SYNPD0000C",
+            "name": "Rohan Kishor Deshmukh",
+            "father_name": "Kishor Anant Deshmukh",
+            "dob": "1991-02-27"
+          },
+          "rendered_fields": {
+            "pan_number": "SYNPD0000C",
+            "name": "ROHAN KISHOR DESHMUKH",
+            "father_name": "KISHOR ANANT DESHMUKH",
+            "dob": "22/07/1991"
+          },
+          "intentional_errors": [
+            {
+              "field": "dob",
+              "error_type": "incorrect_dob",
+              "printed_value": "22/07/1991",
+              "correct_value": "1991-02-27",
+              "description": "PAN prints 22/07/1991; every other document says 27/02/1991."
+            }
+          ],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "passport": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_03_rohan_deshmukh/passport/passport_front.png",
+            "applicant_03_rohan_deshmukh/passport/passport_address_page.png",
+            "applicant_03_rohan_deshmukh/passport/passport.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_03_rohan_deshmukh/passport/passport_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/passport/passport_address_page.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/passport/passport.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "passport_number": "Z0001003",
+            "surname": "Deshmukh",
+            "given_names": "Rohan Kishor",
+            "nationality": "INDIAN",
+            "sex": "M",
+            "dob": "1991-02-27",
+            "place_of_birth": "PUNE",
+            "place_of_issue": "PUNE",
+            "date_of_issue": "2020-09-03",
+            "date_of_expiry": "2030-09-02",
+            "father_name": "Kishor Anant Deshmukh",
+            "mother_name": "Sunita Kishor Deshmukh",
+            "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+            "mrz_line1": "P<INDDESHMUKH<<ROHAN<KISHOR<<<<<<<<<<<<<<<<<",
+            "mrz_line2": "Z0001003<7IND9102273M3009026<<<<<<<<<<<<<<04"
+          },
+          "rendered_fields": {
+            "passport_number": "Z0001003",
+            "surname": "DESHMUKH",
+            "given_names": "ROHAN KISHOR",
+            "nationality": "INDIAN",
+            "sex": "M",
+            "dob": "27/02/1991",
+            "place_of_birth": "PUNE",
+            "place_of_issue": "PUNE",
+            "date_of_issue": "03/09/2020",
+            "date_of_expiry": "02/09/2030",
+            "father_name": "KISHOR ANANT DESHMUKH",
+            "mother_name": "SUNITA KISHOR DESHMUKH",
+            "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+            "mrz_line1": "P<INDDESHMUKH<<ROHAN<KISHOR<<<<<<<<<<<<<<<<<",
+            "mrz_line2": "Z0001003<7IND9102273M3009026<<<<<<<<<<<<<<04"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "expiry_date": "2030-09-02",
+            "is_expired_on_reference_date": false,
+            "missing_fields": []
+          }
+        },
+        "voter_id": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_03_rohan_deshmukh/voter_id/voter_id_front.png",
+            "applicant_03_rohan_deshmukh/voter_id/voter_id_back.png",
+            "applicant_03_rohan_deshmukh/voter_id/voter_id.pdf",
+            "applicant_03_rohan_deshmukh/voter_id/voter_id_front_degraded.jpg",
+            "applicant_03_rohan_deshmukh/voter_id/voter_id_back_degraded.jpg",
+            "applicant_03_rohan_deshmukh/voter_id/voter_id_degraded.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_03_rohan_deshmukh/voter_id/voter_id_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/voter_id/voter_id_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/voter_id/voter_id.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/voter_id/voter_id_front_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 75,
+              "degradations": [
+                {
+                  "op": "rotate",
+                  "deg": -12
+                },
+                {
+                  "op": "saltpepper",
+                  "amount": 0.01
+                }
+              ],
+              "suggested_fix": [
+                "rotate",
+                "saltpepper"
+              ]
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/voter_id/voter_id_back_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 75,
+              "degradations": [
+                {
+                  "op": "rotate",
+                  "deg": -12
+                },
+                {
+                  "op": "saltpepper",
+                  "amount": 0.01
+                }
+              ],
+              "suggested_fix": [
+                "rotate",
+                "saltpepper"
+              ]
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/voter_id/voter_id_degraded.pdf",
+              "quality": "degraded",
+              "degradations": [
+                {
+                  "op": "rotate",
+                  "deg": -12
+                },
+                {
+                  "op": "saltpepper",
+                  "amount": 0.01
+                }
+              ],
+              "note": "PDF built from degraded images"
+            }
+          ],
+          "expected_fields": {
+            "epic_number": "ZZZ0000103",
+            "name": "Rohan Kishor Deshmukh",
+            "relation_type": "Father",
+            "relation_name": "Kishor Anant Deshmukh",
+            "gender": "Male",
+            "dob": "1991-02-27",
+            "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+            "assembly_constituency": "Test Constituency 210 (Pune City)",
+            "part_number": "88"
+          },
+          "rendered_fields": {
+            "epic_number": "ZZZ0000103",
+            "name": "Rohit Kishor Deshmukh",
+            "relation_type": "Father",
+            "relation_name": "Kishor Anant Deshmukh",
+            "gender": "Male",
+            "dob": "27/02/1991",
+            "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+            "assembly_constituency": "Test Constituency 210 (Pune City)",
+            "part_number": "88"
+          },
+          "intentional_errors": [
+            {
+              "field": "name",
+              "error_type": "name_mismatch",
+              "printed_value": "Rohit Kishor Deshmukh",
+              "correct_value": "Rohan Kishor Deshmukh",
+              "description": "Given name printed as 'Rohit' instead of 'Rohan' (all other documents say Rohan)."
+            }
+          ],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "driving_licence": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_03_rohan_deshmukh/driving_licence/driving_licence_front.jpg",
+            "applicant_03_rohan_deshmukh/driving_licence/driving_licence_back.jpg",
+            "applicant_03_rohan_deshmukh/driving_licence/driving_licence.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_03_rohan_deshmukh/driving_licence/driving_licence_front.jpg",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/driving_licence/driving_licence_back.jpg",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_03_rohan_deshmukh/driving_licence/driving_licence.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "dl_number": "MH12 0000 0003051",
+            "name": "Rohan Kishor Deshmukh",
+            "guardian_name": "S/O KISHOR ANANT DESHMUKH",
+            "dob": "1991-02-27",
+            "blood_group": "A+",
+            "address": "B-304, DEMO PARK APARTMENTS, KOTHRUD ROAD, PUNE, MAHARASHTRA - 411038",
+            "issue_date": "2011-07-15",
+            "valid_till": "2031-07-14",
+            "vehicle_classes": "MCWG, LMV",
+            "issuing_authority": "RTO PUNE (MH12)"
+          },
+          "rendered_fields": {
+            "dl_number": "MH12 0000 0003051",
+            "name": "ROHAN KISHOR DESHMUKH",
+            "guardian_name": "S/O KISHOR ANANT DESHMUKH",
+            "dob": "27/02/1991",
+            "blood_group": "A+",
+            "address": "B-304, DEMO PARK APARTMENTS, KOTHRUD ROAD, PUNE, MAHARASHTRA - 411038",
+            "issue_date": "15/07/2011",
+            "valid_till": "14/07/2031",
+            "vehicle_classes": "MCWG, LMV",
+            "issuing_authority": "RTO PUNE (MH12)"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "expiry_date": "2031-07-14",
+            "is_expired_on_reference_date": false,
+            "missing_fields": []
+          }
+        }
+      },
+      "cross_document_expectations": {
+        "name_consistent": false,
+        "dob_consistent": false,
+        "address_consistent": true,
+        "names_as_printed": {
+          "aadhaar": "Rohan Kishor Deshmukh",
+          "pan": "ROHAN KISHOR DESHMUKH",
+          "passport": "ROHAN KISHOR DESHMUKH",
+          "voter_id": "Rohit Kishor Deshmukh",
+          "driving_licence": "ROHAN KISHOR DESHMUKH"
+        },
+        "dobs_as_printed": {
+          "aadhaar": "27/02/1991",
+          "pan": "22/07/1991",
+          "passport": "27/02/1991",
+          "voter_id": "27/02/1991",
+          "driving_licence": "27/02/1991"
+        },
+        "expected_flags": [
+          "dob_mismatch",
+          "invalid_id_format:aadhaar",
+          "name_mismatch"
+        ],
+        "expected_decision": "FLAG_FOR_REVIEW"
+      }
+    },
+    {
+      "applicant_id": "APP004",
+      "folder": "applicant_04_fatima_sheikh",
+      "profile_type": "normal",
+      "canonical_profile": {
+        "full_name": "Fatima Zahra Sheikh",
+        "dob": "1996-05-19",
+        "gender": "F",
+        "father_name": "Abdul Rahim Sheikh",
+        "mother_name": "Nasreen Abdul Sheikh",
+        "place_of_birth": "Hyderabad",
+        "address": {
+          "l1": "Door 8-2-120, Mock Enclave",
+          "l2": "Road No. 12, Banjara Hills",
+          "city": "Hyderabad",
+          "state": "Telangana",
+          "pin": "500034"
+        },
+        "address_full": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034"
+      },
+      "portrait_source": "applicant_04_fatima_sheikh/portrait_source.png",
+      "documents": {
+        "aadhaar": {
+          "layout_variant": 1,
+          "files": [
+            "applicant_04_fatima_sheikh/aadhaar/aadhaar_front.png",
+            "applicant_04_fatima_sheikh/aadhaar/aadhaar_back.png",
+            "applicant_04_fatima_sheikh/aadhaar/aadhaar.pdf",
+            "applicant_04_fatima_sheikh/aadhaar/aadhaar_front_degraded.jpg",
+            "applicant_04_fatima_sheikh/aadhaar/aadhaar_back_degraded.jpg",
+            "applicant_04_fatima_sheikh/aadhaar/aadhaar_degraded.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_04_fatima_sheikh/aadhaar/aadhaar_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/aadhaar/aadhaar_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/aadhaar/aadhaar.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/aadhaar/aadhaar_front_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 65,
+              "degradations": [
+                {
+                  "op": "perspective",
+                  "strength": 0.08
+                },
+                {
+                  "op": "shadow",
+                  "strength": 0.5
+                },
+                {
+                  "op": "gblur",
+                  "sigma": 1.2
+                },
+                {
+                  "op": "rotate",
+                  "deg": 4
+                }
+              ],
+              "suggested_fix": [
+                "perspective",
+                "shadow",
+                "gblur",
+                "rotate"
+              ]
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/aadhaar/aadhaar_back_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 65,
+              "degradations": [
+                {
+                  "op": "perspective",
+                  "strength": 0.08
+                },
+                {
+                  "op": "shadow",
+                  "strength": 0.5
+                },
+                {
+                  "op": "gblur",
+                  "sigma": 1.2
+                },
+                {
+                  "op": "rotate",
+                  "deg": 4
+                }
+              ],
+              "suggested_fix": [
+                "perspective",
+                "shadow",
+                "gblur",
+                "rotate"
+              ]
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/aadhaar/aadhaar_degraded.pdf",
+              "quality": "degraded",
+              "degradations": [
+                {
+                  "op": "perspective",
+                  "strength": 0.08
+                },
+                {
+                  "op": "shadow",
+                  "strength": 0.5
+                },
+                {
+                  "op": "gblur",
+                  "sigma": 1.2
+                },
+                {
+                  "op": "rotate",
+                  "deg": 4
+                }
+              ],
+              "note": "PDF built from degraded images"
+            }
+          ],
+          "expected_fields": {
+            "name": "Fatima Zahra Sheikh",
+            "dob": "1996-05-19",
+            "gender": "Female",
+            "aadhaar_number": "0000 9035 1168",
+            "care_of": "D/O Abdul Rahim Sheikh",
+            "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034"
+          },
+          "rendered_fields": {
+            "name": "Fatima Zahra Sheikh",
+            "dob": "19/05/1996",
+            "gender": "Female",
+            "aadhaar_number": "0000 9035 1168",
+            "care_of": "D/O Abdul Rahim Sheikh",
+            "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "pan": {
+          "layout_variant": 1,
+          "files": [
+            "applicant_04_fatima_sheikh/pan/pan_front.png",
+            "applicant_04_fatima_sheikh/pan/pan.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_04_fatima_sheikh/pan/pan_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/pan/pan.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "pan_number": "SYNPS0000D",
+            "name": "Fatima Zahra Sheikh",
+            "father_name": "Abdul Rahim Sheikh",
+            "dob": "1996-05-19"
+          },
+          "rendered_fields": {
+            "pan_number": "SYNPS0000D",
+            "name": "FATIMA ZAHRA SHEIKH",
+            "father_name": "ABDUL RAHIM SHEIKH",
+            "dob": "19/05/1996"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "passport": {
+          "layout_variant": 1,
+          "files": [
+            "applicant_04_fatima_sheikh/passport/passport_front.jpg",
+            "applicant_04_fatima_sheikh/passport/passport_address_page.jpg",
+            "applicant_04_fatima_sheikh/passport/passport.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_04_fatima_sheikh/passport/passport_front.jpg",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/passport/passport_address_page.jpg",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/passport/passport.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "passport_number": "Z0001004",
+            "surname": "Sheikh",
+            "given_names": "Fatima Zahra",
+            "nationality": "INDIAN",
+            "sex": "F",
+            "dob": "1996-05-19",
+            "place_of_birth": "HYDERABAD",
+            "place_of_issue": "HYDERABAD",
+            "date_of_issue": "2022-12-05",
+            "date_of_expiry": "2032-12-04",
+            "father_name": "Abdul Rahim Sheikh",
+            "mother_name": "Nasreen Abdul Sheikh",
+            "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+            "mrz_line1": "P<INDSHEIKH<<FATIMA<ZAHRA<<<<<<<<<<<<<<<<<<<",
+            "mrz_line2": "Z0001004<0IND9605198F3212046<<<<<<<<<<<<<<06"
+          },
+          "rendered_fields": {
+            "passport_number": "Z0001004",
+            "surname": "SHEIKH",
+            "given_names": "FATIMA ZAHRA",
+            "nationality": "INDIAN",
+            "sex": "F",
+            "dob": "19/05/1996",
+            "place_of_birth": "HYDERABAD",
+            "place_of_issue": "HYDERABAD",
+            "date_of_issue": "05/12/2022",
+            "date_of_expiry": "04/12/2032",
+            "father_name": "ABDUL RAHIM SHEIKH",
+            "mother_name": "NASREEN ABDUL SHEIKH",
+            "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+            "mrz_line1": "P<INDSHEIKH<<FATIMA<ZAHRA<<<<<<<<<<<<<<<<<<<",
+            "mrz_line2": "Z0001004<0IND9605198F3212046<<<<<<<<<<<<<<06"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "expiry_date": "2032-12-04",
+            "is_expired_on_reference_date": false,
+            "missing_fields": []
+          }
+        },
+        "voter_id": {
+          "layout_variant": 1,
+          "files": [
+            "applicant_04_fatima_sheikh/voter_id/voter_id_front.png",
+            "applicant_04_fatima_sheikh/voter_id/voter_id_back.png",
+            "applicant_04_fatima_sheikh/voter_id/voter_id.pdf",
+            "applicant_04_fatima_sheikh/voter_id/voter_id_front_degraded.jpg",
+            "applicant_04_fatima_sheikh/voter_id/voter_id_back_degraded.jpg",
+            "applicant_04_fatima_sheikh/voter_id/voter_id_degraded.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_04_fatima_sheikh/voter_id/voter_id_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/voter_id/voter_id_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/voter_id/voter_id.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/voter_id/voter_id_front_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 60,
+              "degradations": [
+                {
+                  "op": "fax"
+                },
+                {
+                  "op": "saltpepper",
+                  "amount": 0.02
+                }
+              ],
+              "suggested_fix": [
+                "fax",
+                "saltpepper"
+              ]
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/voter_id/voter_id_back_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 60,
+              "degradations": [
+                {
+                  "op": "fax"
+                },
+                {
+                  "op": "saltpepper",
+                  "amount": 0.02
+                }
+              ],
+              "suggested_fix": [
+                "fax",
+                "saltpepper"
+              ]
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/voter_id/voter_id_degraded.pdf",
+              "quality": "degraded",
+              "degradations": [
+                {
+                  "op": "fax"
+                },
+                {
+                  "op": "saltpepper",
+                  "amount": 0.02
+                }
+              ],
+              "note": "PDF built from degraded images"
+            }
+          ],
+          "expected_fields": {
+            "epic_number": "ZZZ0000104",
+            "name": "Fatima Zahra Sheikh",
+            "relation_type": "Father",
+            "relation_name": "Abdul Rahim Sheikh",
+            "gender": "Female",
+            "dob": "1996-05-19",
+            "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+            "assembly_constituency": "Test Constituency 066 (Hyderabad Central)",
+            "part_number": "203"
+          },
+          "rendered_fields": {
+            "epic_number": "ZZZ0000104",
+            "name": "Fatima Zahra Sheikh",
+            "relation_type": "Father",
+            "relation_name": "Abdul Rahim Sheikh",
+            "gender": "Female",
+            "dob": "19/05/1996",
+            "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+            "assembly_constituency": "Test Constituency 066 (Hyderabad Central)",
+            "part_number": "203"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "driving_licence": {
+          "layout_variant": 1,
+          "files": [
+            "applicant_04_fatima_sheikh/driving_licence/driving_licence_front.png",
+            "applicant_04_fatima_sheikh/driving_licence/driving_licence_back.png",
+            "applicant_04_fatima_sheikh/driving_licence/driving_licence.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_04_fatima_sheikh/driving_licence/driving_licence_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/driving_licence/driving_licence_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_04_fatima_sheikh/driving_licence/driving_licence.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "dl_number": "TS09 0000 0005588",
+            "name": "Fatima Zahra Sheikh",
+            "guardian_name": "D/O ABDUL RAHIM SHEIKH",
+            "dob": "1996-05-19",
+            "blood_group": "AB+",
+            "address": "DOOR 8-2-120, MOCK ENCLAVE, ROAD NO. 12, BANJARA HILLS, HYDERABAD, TELANGANA - 500034",
+            "issue_date": "2016-03-09",
+            "valid_till": "2036-03-08",
+            "vehicle_classes": "MCWG, LMV",
+            "issuing_authority": "RTO HYDERABAD (TS09)"
+          },
+          "rendered_fields": {
+            "dl_number": "TS09 0000 0005588",
+            "name": "FATIMA ZAHRA SHEIKH",
+            "guardian_name": "D/O ABDUL RAHIM SHEIKH",
+            "dob": "19/05/1996",
+            "blood_group": "AB+",
+            "address": "DOOR 8-2-120, MOCK ENCLAVE, ROAD NO. 12, BANJARA HILLS, HYDERABAD, TELANGANA - 500034",
+            "issue_date": "09/03/2016",
+            "valid_till": "08/03/2036",
+            "vehicle_classes": "MCWG, LMV",
+            "issuing_authority": "RTO HYDERABAD (TS09)"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "expiry_date": "2036-03-08",
+            "is_expired_on_reference_date": false,
+            "missing_fields": []
+          }
+        }
+      },
+      "cross_document_expectations": {
+        "name_consistent": true,
+        "dob_consistent": true,
+        "address_consistent": true,
+        "names_as_printed": {
+          "aadhaar": "Fatima Zahra Sheikh",
+          "pan": "FATIMA ZAHRA SHEIKH",
+          "passport": "FATIMA ZAHRA SHEIKH",
+          "voter_id": "Fatima Zahra Sheikh",
+          "driving_licence": "FATIMA ZAHRA SHEIKH"
+        },
+        "dobs_as_printed": {
+          "aadhaar": "19/05/1996",
+          "pan": "19/05/1996",
+          "passport": "19/05/1996",
+          "voter_id": "19/05/1996",
+          "driving_licence": "19/05/1996"
+        },
+        "expected_flags": [],
+        "expected_decision": "PASS"
+      }
+    },
+    {
+      "applicant_id": "APP005",
+      "folder": "applicant_05_gurpreet_sandhu",
+      "profile_type": "contains_errors",
+      "canonical_profile": {
+        "full_name": "Gurpreet Singh Sandhu",
+        "dob": "1985-12-08",
+        "gender": "M",
+        "father_name": "Harbhajan Singh Sandhu",
+        "mother_name": "Surjit Kaur Sandhu",
+        "place_of_birth": "Ludhiana",
+        "address": {
+          "l1": "House 1127, Placeholder Colony",
+          "l2": "Sector 32",
+          "city": "Ludhiana",
+          "state": "Punjab",
+          "pin": "141010"
+        },
+        "address_full": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010"
+      },
+      "portrait_source": "applicant_05_gurpreet_sandhu/portrait_source.png",
+      "documents": {
+        "aadhaar": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_05_gurpreet_sandhu/aadhaar/aadhaar_front.jpg",
+            "applicant_05_gurpreet_sandhu/aadhaar/aadhaar_back.jpg",
+            "applicant_05_gurpreet_sandhu/aadhaar/aadhaar.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_05_gurpreet_sandhu/aadhaar/aadhaar_front.jpg",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/aadhaar/aadhaar_back.jpg",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/aadhaar/aadhaar.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "name": "Gurpreet Singh Sandhu",
+            "dob": "1985-12-08",
+            "gender": "Male",
+            "aadhaar_number": "0000 3358 9402",
+            "care_of": "S/O Harbhajan Singh Sandhu",
+            "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010"
+          },
+          "rendered_fields": {
+            "name": "Gurpreet Singh Sandhu",
+            "dob": "08/12/1985",
+            "gender": "Male",
+            "aadhaar_number": "0000 3358 9402",
+            "care_of": "S/O Harbhajan Singh Sandhu",
+            "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010"
+          },
+          "intentional_errors": [],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": []
+          }
+        },
+        "pan": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_05_gurpreet_sandhu/pan/pan_front.png",
+            "applicant_05_gurpreet_sandhu/pan/pan.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_05_gurpreet_sandhu/pan/pan_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/pan/pan.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "pan_number": "SYNPS0000E",
+            "name": "Gurpreet Singh Sandhu",
+            "father_name": "Harbhajan Singh Sandhu",
+            "dob": "1985-12-08"
+          },
+          "rendered_fields": {
+            "pan_number": "SYNPS00000E",
+            "name": "GURPREET SINGH SANDHU",
+            "father_name": "HARBHAJAN SINGH SANDHU",
+            "dob": "08/12/1985"
+          },
+          "intentional_errors": [
+            {
+              "field": "pan_number",
+              "error_type": "invalid_id_format",
+              "printed_value": "SYNPS00000E",
+              "correct_value": "SYNPS0000E",
+              "description": "PAN has 11 characters (extra digit); should be 10."
+            }
+          ],
+          "validation": {
+            "id_matches_synthetic_pattern": false,
+            "missing_fields": []
+          }
+        },
+        "passport": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_05_gurpreet_sandhu/passport/passport_front.png",
+            "applicant_05_gurpreet_sandhu/passport/passport_address_page.png",
+            "applicant_05_gurpreet_sandhu/passport/passport.pdf",
+            "applicant_05_gurpreet_sandhu/passport/passport_front_degraded.jpg",
+            "applicant_05_gurpreet_sandhu/passport/passport_address_page_degraded.jpg",
+            "applicant_05_gurpreet_sandhu/passport/passport_degraded.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_05_gurpreet_sandhu/passport/passport_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/passport/passport_address_page.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/passport/passport.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/passport/passport_front_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 30,
+              "degradations": [
+                {
+                  "op": "lowres",
+                  "scale": 0.5
+                },
+                {
+                  "op": "rotate",
+                  "deg": -4
+                }
+              ],
+              "suggested_fix": [
+                "lowres",
+                "rotate"
+              ]
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/passport/passport_address_page_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 30,
+              "degradations": [
+                {
+                  "op": "lowres",
+                  "scale": 0.5
+                },
+                {
+                  "op": "rotate",
+                  "deg": -4
+                }
+              ],
+              "suggested_fix": [
+                "lowres",
+                "rotate"
+              ]
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/passport/passport_degraded.pdf",
+              "quality": "degraded",
+              "degradations": [
+                {
+                  "op": "lowres",
+                  "scale": 0.5
+                },
+                {
+                  "op": "rotate",
+                  "deg": -4
+                }
+              ],
+              "note": "PDF built from degraded images"
+            }
+          ],
+          "expected_fields": {
+            "passport_number": "Z0001005",
+            "surname": "Sandhu",
+            "given_names": "Gurpreet Singh",
+            "nationality": "INDIAN",
+            "sex": "M",
+            "dob": "1985-12-08",
+            "place_of_birth": "LUDHIANA",
+            "place_of_issue": "JALANDHAR",
+            "date_of_issue": "2013-05-10",
+            "date_of_expiry": "2023-05-09",
+            "father_name": "Harbhajan Singh Sandhu",
+            "mother_name": "Surjit Kaur Sandhu",
+            "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010",
+            "mrz_line1": "P<INDSANDHU<<GURPREET<SINGH<<<<<<<<<<<<<<<<<",
+            "mrz_line2": "Z0001005<3IND8512084M2305097<<<<<<<<<<<<<<06"
+          },
+          "rendered_fields": {
+            "passport_number": "Z0001005",
+            "surname": "SANDHU",
+            "given_names": "GURPREET SINGH",
+            "nationality": "INDIAN",
+            "sex": "M",
+            "dob": "08/12/1985",
+            "place_of_birth": "LUDHIANA",
+            "place_of_issue": "JALANDHAR",
+            "date_of_issue": "10/05/2013",
+            "date_of_expiry": "09/05/2023",
+            "father_name": "HARBHAJAN SINGH SANDHU",
+            "mother_name": "SURJIT KAUR SANDHU",
+            "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010",
+            "mrz_line1": "P<INDSANDHU<<GURPREET<SINGH<<<<<<<<<<<<<<<<<",
+            "mrz_line2": "Z0001005<3IND8512084M2305097<<<<<<<<<<<<<<06"
+          },
+          "intentional_errors": [
+            {
+              "field": "date_of_expiry",
+              "error_type": "expired_document",
+              "printed_value": "09/05/2023",
+              "correct_value": null,
+              "description": "Passport expired on 09/05/2023 (before reference date 2026-11-23)."
+            }
+          ],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "expiry_date": "2023-05-09",
+            "is_expired_on_reference_date": true,
+            "missing_fields": []
+          }
+        },
+        "voter_id": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_05_gurpreet_sandhu/voter_id/voter_id_front.png",
+            "applicant_05_gurpreet_sandhu/voter_id/voter_id_back.png",
+            "applicant_05_gurpreet_sandhu/voter_id/voter_id.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_05_gurpreet_sandhu/voter_id/voter_id_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/voter_id/voter_id_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/voter_id/voter_id.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            }
+          ],
+          "expected_fields": {
+            "epic_number": "ZZZ0000105",
+            "name": "Gurpreet Singh Sandhu",
+            "relation_type": "Father",
+            "relation_name": "Harbhajan Singh Sandhu",
+            "gender": "Male",
+            "dob": "1985-12-08",
+            "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010",
+            "assembly_constituency": "Test Constituency 063 (Ludhiana West)",
+            "part_number": "31"
+          },
+          "rendered_fields": {
+            "epic_number": "ZZZ0000105",
+            "name": "Gurpreet Singh Sandhu",
+            "relation_type": "Father",
+            "relation_name": "Harbhajan Singh Sandhu",
+            "gender": "Male",
+            "dob": null,
+            "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010",
+            "assembly_constituency": "Test Constituency 063 (Ludhiana West)",
+            "part_number": "31"
+          },
+          "intentional_errors": [
+            {
+              "field": "dob",
+              "error_type": "missing_field",
+              "printed_value": null,
+              "correct_value": null,
+              "description": "Date of Birth line is absent from the Voter ID."
+            }
+          ],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "missing_fields": [
+              "dob"
+            ]
+          }
+        },
+        "driving_licence": {
+          "layout_variant": 0,
+          "files": [
+            "applicant_05_gurpreet_sandhu/driving_licence/driving_licence_front.png",
+            "applicant_05_gurpreet_sandhu/driving_licence/driving_licence_back.png",
+            "applicant_05_gurpreet_sandhu/driving_licence/driving_licence.pdf",
+            "applicant_05_gurpreet_sandhu/driving_licence/driving_licence_front_degraded.jpg",
+            "applicant_05_gurpreet_sandhu/driving_licence/driving_licence_back_degraded.jpg",
+            "applicant_05_gurpreet_sandhu/driving_licence/driving_licence_degraded.pdf"
+          ],
+          "image_quality": [
+            {
+              "file": "applicant_05_gurpreet_sandhu/driving_licence/driving_licence_front.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/driving_licence/driving_licence_back.png",
+              "quality": "clean"
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/driving_licence/driving_licence.pdf",
+              "quality": "clean",
+              "note": "image-only scan-style PDF (A4)"
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/driving_licence/driving_licence_front_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 80,
+              "degradations": [
+                {
+                  "op": "rotate",
+                  "deg": 90
+                },
+                {
+                  "op": "rotate",
+                  "deg": 3
+                },
+                {
+                  "op": "noise",
+                  "sigma": 4
+                }
+              ],
+              "suggested_fix": [
+                "rotate",
+                "rotate",
+                "noise"
+              ]
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/driving_licence/driving_licence_back_degraded.jpg",
+              "quality": "degraded",
+              "jpeg_quality": 80,
+              "degradations": [
+                {
+                  "op": "rotate",
+                  "deg": 90
+                },
+                {
+                  "op": "rotate",
+                  "deg": 3
+                },
+                {
+                  "op": "noise",
+                  "sigma": 4
+                }
+              ],
+              "suggested_fix": [
+                "rotate",
+                "rotate",
+                "noise"
+              ]
+            },
+            {
+              "file": "applicant_05_gurpreet_sandhu/driving_licence/driving_licence_degraded.pdf",
+              "quality": "degraded",
+              "degradations": [
+                {
+                  "op": "rotate",
+                  "deg": 90
+                },
+                {
+                  "op": "rotate",
+                  "deg": 3
+                },
+                {
+                  "op": "noise",
+                  "sigma": 4
+                }
+              ],
+              "note": "PDF built from degraded images"
+            }
+          ],
+          "expected_fields": {
+            "dl_number": "PB10 0000 0002196",
+            "name": "Gurpreet Singh Sandhu",
+            "guardian_name": "S/O HARBHAJAN SINGH SANDHU",
+            "dob": "1985-12-08",
+            "blood_group": "O-",
+            "address": "HOUSE 1127, PLACEHOLDER COLONY, SECTOR 32, LUDHIANA, PUNJAB - 141010",
+            "issue_date": "2014-08-02",
+            "valid_till": "2024-08-01",
+            "vehicle_classes": "MCWG, LMV",
+            "issuing_authority": "RTO LUDHIANA (PB10)"
+          },
+          "rendered_fields": {
+            "dl_number": "PB10 0000 0002196",
+            "name": "GURPREET SINGH SANDHU",
+            "guardian_name": "S/O HARBHAJAN SINGH SANDHU",
+            "dob": "08/12/1985",
+            "blood_group": "O-",
+            "address": "FLAT 22, SAMPLE COLONY, MODEL TOWN, JALANDHAR, PUNJAB - 144003",
+            "issue_date": "02/08/2014",
+            "valid_till": "01/08/2024",
+            "vehicle_classes": "MCWG, LMV",
+            "issuing_authority": "RTO LUDHIANA (PB10)"
+          },
+          "intentional_errors": [
+            {
+              "field": "valid_till",
+              "error_type": "expired_document",
+              "printed_value": "01/08/2024",
+              "correct_value": null,
+              "description": "Licence validity ended 01/08/2024 (before reference date)."
+            },
+            {
+              "field": "address",
+              "error_type": "address_mismatch",
+              "printed_value": "FLAT 22, SAMPLE COLONY, MODEL TOWN, JALANDHAR, PUNJAB - 144003",
+              "correct_value": "HOUSE 1127, PLACEHOLDER COLONY, SECTOR 32, LUDHIANA, PUNJAB - 141010",
+              "description": "DL prints a Jalandhar address; all other documents show Ludhiana."
+            }
+          ],
+          "validation": {
+            "id_matches_synthetic_pattern": true,
+            "expiry_date": "2024-08-01",
+            "is_expired_on_reference_date": true,
+            "missing_fields": []
+          }
+        }
+      },
+      "cross_document_expectations": {
+        "name_consistent": true,
+        "dob_consistent": true,
+        "address_consistent": false,
+        "names_as_printed": {
+          "aadhaar": "Gurpreet Singh Sandhu",
+          "pan": "GURPREET SINGH SANDHU",
+          "passport": "GURPREET SINGH SANDHU",
+          "voter_id": "Gurpreet Singh Sandhu",
+          "driving_licence": "GURPREET SINGH SANDHU"
+        },
+        "dobs_as_printed": {
+          "aadhaar": "08/12/1985",
+          "pan": "08/12/1985",
+          "passport": "08/12/1985",
+          "driving_licence": "08/12/1985"
+        },
+        "expected_flags": [
+          "address_mismatch",
+          "expired:driving_licence",
+          "expired:passport",
+          "invalid_id_format:pan",
+          "missing_field:voter_id.dob"
+        ],
+        "expected_decision": "FLAG_FOR_REVIEW"
+      }
+    }
+  ]
+}

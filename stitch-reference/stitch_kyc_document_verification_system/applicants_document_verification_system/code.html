@@ -1,0 +1,558 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Applicants — Document Verification System</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            surface: {
+              DEFAULT: '#F8F9FA',
+              card: '#FFFFFF',
+              subtle: '#F4F5F7',
+            },
+            line: '#E2E8F0',
+            primary: '#111827',
+            accent: '#527A9E',
+            text: {
+              main: '#0F172A',
+              subtle: '#64748B',
+              muted: '#94A3B8',
+            }
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f8f9fa; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-[#F8F9FA] text-[#0F172A] antialiased min-h-screen flex flex-col justify-between selection:bg-slate-200">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-[#FFFFFF] border-b border-[#E2E8F0] h-14">
+<div class="max-w-[1536px] h-full mx-auto px-6 flex items-center justify-between gap-6">
+<!-- Brand -->
+<div class="flex items-center gap-2 shrink-0">
+<span class="w-2 h-2 rounded-full bg-[#527A9E]"></span>
+<span class="text-[12px] font-semibold tracking-wider text-[#0F172A] uppercase">Document Verification</span>
+</div>
+<!-- Main Navigation -->
+<nav class="hidden lg:flex items-center gap-6 shrink-0 h-full">
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center" href="#">Overview</a>
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center" href="#">Upload Documents</a>
+<a aria-current="page" class="text-[13px] font-semibold text-[#0F172A] h-full flex items-center border-b-2 border-[#111827]" href="#">Applicants</a>
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center" href="#">Verification Queue</a>
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center" href="#">Reports</a>
+</nav>
+<!-- Right controls: Search & Officer -->
+<div class="flex items-center gap-4 shrink-0">
+<div class="relative hidden sm:flex items-center">
+<span class="material-symbols-outlined absolute left-2.5 text-[16px] text-[#94A3B8]">search</span>
+<input class="text-[12px] pl-8 pr-3 py-1.5 w-56 bg-[#F8F9FA] border border-[#E2E8F0] rounded text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#527A9E] focus:bg-white transition-colors" placeholder="Search records, docs, IDs..." type="text">
+</div>
+<div class="h-4 w-px bg-[#E2E8F0] hidden sm:block"></div>
+<div class="flex items-center gap-2.5">
+<div class="text-right hidden sm:block">
+<div class="text-[12px] font-medium text-[#0F172A] leading-tight">Arjun Mehta</div>
+<div class="text-[11px] text-[#64748B] leading-tight">Review Officer</div>
+</div>
+<div class="w-7 h-7 rounded bg-[#111827] flex items-center justify-center text-white text-[11px] font-medium">
+            AM
+          </div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main View Container -->
+<main class="w-full pt-14 flex-1">
+<div class="max-w-[1536px] mx-auto px-6 py-6 space-y-5">
+<!-- Header Section: Refined, clean sans-serif -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[11px] font-medium text-[#64748B] uppercase tracking-wide">Directory</span>
+<span class="text-[#CBD5E1]">/</span>
+<span class="text-[11px] font-medium text-[#527A9E]">Applicants</span>
+</div>
+<h1 class="text-[38px] font-bold text-[#0F172A] tracking-tight leading-tight">
+            Applicants
+          </h1>
+<p class="text-[15px] text-[#64748B] mt-1 leading-relaxed">
+            Manage applicant profiles and track multi-jurisdiction KYC verification stages.
+          </p>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-[#0F172A] bg-white border border-[#E2E8F0] rounded hover:bg-[#F8F9FA] transition-colors shadow-xs" type="button">
+<span class="material-symbols-outlined text-[16px] text-[#64748B]">download</span>
+            Export dossier
+          </button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-white bg-[#111827] hover:bg-[#1E293B] rounded transition-colors shadow-xs" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+            Add applicant
+          </button>
+</div>
+</div>
+<!-- Compact Statistics Strip -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3"><!-- Card 1 -->
+<div class="bg-white border border-[#E2E8F0] rounded p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-[13px] font-medium text-[#64748B]">Total Applicants</span>
+<span class="material-symbols-outlined text-[18px] text-[#94A3B8]">folder_shared</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-[30px] font-bold text-[#0F172A] tracking-tight leading-none">842</span>
+<span class="text-[12px] text-[#94A3B8]">registered</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white border border-[#E2E8F0] rounded p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-[13px] font-medium text-[#64748B]">Verified</span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-[30px] font-bold text-[#0F172A] tracking-tight leading-none">689</span>
+<span class="text-[12px] text-[#10B981] font-medium">81.8% rate</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white border border-[#E2E8F0] rounded p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-[13px] font-medium text-[#64748B]">Pending Review</span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#527A9E]"></span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-[30px] font-bold text-[#0F172A] tracking-tight leading-none">98</span>
+<span class="text-[12px] text-[#64748B]">in queue</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white border border-[#E2E8F0] rounded p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-[13px] font-medium text-[#64748B]">Requires Attention</span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#E11D48]"></span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-[30px] font-bold text-[#9F1239] tracking-tight leading-none">55</span>
+<span class="text-[12px] text-[#E11D48] font-medium">discrepancies</span>
+</div>
+</div></div>
+<!-- Compact Search & Filter Toolbar -->
+<div class="bg-white border border-[#E2E8F0] rounded px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+<!-- Search bar -->
+<div class="relative flex-1 min-w-[260px] max-w-md">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-[#94A3B8]">search</span>
+<input class="w-full bg-[#F8F9FA] border border-[#E2E8F0] rounded pl-8 pr-3 py-1.5 text-[12px] text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#527A9E] focus:bg-white transition-colors" placeholder="Search by applicant name or ID (e.g. APP-3091)..." type="text" value="APP-3091">
+</div>
+<!-- Filters group -->
+<div class="flex flex-wrap items-center gap-2">
+<!-- Status Dropdown -->
+<div class="relative">
+<button class="inline-flex items-center gap-1.5 bg-[#F8F9FA] hover:bg-[#F1F5F9] border border-[#E2E8F0] rounded px-2.5 py-1.5 text-[12px] text-[#0F172A] transition-colors" type="button">
+<span class="text-[#64748B]">Status:</span>
+<span class="font-medium">All (842)</span>
+<span class="material-symbols-outlined text-[15px] text-[#94A3B8]">expand_more</span>
+</button>
+</div>
+<!-- Document Type Dropdown -->
+<div class="relative">
+<button class="inline-flex items-center gap-1.5 bg-[#F8F9FA] hover:bg-[#F1F5F9] border border-[#E2E8F0] rounded px-2.5 py-1.5 text-[12px] text-[#0F172A] transition-colors" type="button">
+<span class="text-[#64748B]">Document:</span>
+<span class="font-medium">All Types</span>
+<span class="material-symbols-outlined text-[15px] text-[#94A3B8]">expand_more</span>
+</button>
+</div>
+<!-- Active Filter Pill -->
+<div class="inline-flex items-center gap-1 bg-[#F1F5F9] border border-[#E2E8F0] rounded px-2 py-1 text-[11px] text-[#334155] font-medium">
+<span>Flagged filter</span>
+<button class="text-[#94A3B8] hover:text-[#0F172A] ml-0.5" type="button">✕</button>
+</div>
+<button class="text-[12px] text-[#64748B] hover:text-[#0F172A] underline underline-offset-2 ml-1" type="button">
+            Reset
+          </button>
+</div>
+</div>
+<!-- Main Workspace: Table + Narrow Balanced Right Dossier Panel -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+<!-- Applicant Ledger Table (8 Cols on desktop) -->
+<div class="lg:col-span-7 xl:col-span-8 bg-white border border-[#E2E8F0] rounded shadow-xs overflow-hidden flex flex-col">
+<!-- Table Header bar -->
+<div class="px-4 py-2.5 border-b border-[#E2E8F0] bg-[#FAFAFA] flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-semibold text-[#0F172A] uppercase tracking-wide">Records Ledger</span>
+<span class="text-[11px] px-1.5 py-0.5 bg-white border border-[#E2E8F0] rounded text-[#64748B] font-mono">1–7 of 842</span>
+</div>
+<span class="text-[11px] text-[#64748B]">Sorted: <span class="font-medium text-[#0F172A]">Recency (Desc)</span></span>
+</div>
+<!-- Table element -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse"><thead>
+<tr class="border-b border-[#E2E8F0] bg-[#F8F9FA] text-[12px] font-semibold text-[#64748B]">
+<th class="py-3 px-3.5 pl-4">ID</th>
+<th class="py-3 px-3">Applicant Name</th>
+<th class="py-3 px-3">Documents Submitted</th>
+<th class="py-3 px-3">Verification Status</th>
+<th class="py-3 px-3">Last Updated</th>
+<th class="py-3 px-3.5 pr-4 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#E2E8F0] text-[13px]">
+<!-- Row 1: Siddharth Nair -->
+<tr class="hover:bg-[#F8F9FA] transition-colors cursor-pointer group">
+<td class="py-3 px-3.5 pl-4 font-mono text-[12px] font-medium text-[#334155]">APP-3104</td>
+<td class="py-3 px-3">
+<div class="font-semibold text-[14px] text-[#0F172A] leading-snug">Siddharth Nair</div>
+<div class="text-[12px] text-[#94A3B8]">s.nair••••@gmail.com</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">Aadhaar</span>
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">PAN</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[12px] font-medium bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+                      Verified
+                    </span>
+</td>
+<td class="py-3 px-3 text-[#64748B] text-[12px]">12m ago</td>
+<td class="py-3 px-3.5 pr-4 text-right">
+<span class="text-[12px] font-medium text-[#527A9E] group-hover:underline">View details →</span>
+</td>
+</tr>
+<!-- Row 2: Priya Sharma (ACTIVE SELECTION) -->
+<tr class="bg-[#F0F5FA] border-l-2 border-l-[#527A9E] transition-colors">
+<td class="py-3 px-3.5 pl-4 font-mono text-[12px] font-semibold text-[#0F172A]">APP-3091</td>
+<td class="py-3 px-3">
+<div class="font-semibold text-[14px] text-[#0F172A] flex items-center gap-1.5 leading-snug">
+                      Priya Sharma
+                      <span class="w-2 h-2 rounded-full bg-[#E11D48]" title="Requires Attention"></span>
+</div>
+<div class="text-[12px] text-[#64748B]">p••••••@example.com</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-0.5 bg-white border border-[#CBD5E1] text-[#0F172A] rounded text-[11px] font-medium">Aadhaar</span>
+<span class="px-2 py-0.5 bg-white border border-[#CBD5E1] text-[#0F172A] rounded text-[11px] font-medium">PAN</span>
+<span class="px-2 py-0.5 bg-white border border-[#CBD5E1] text-[#0F172A] rounded text-[11px] font-medium">Passport</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[12px] font-medium bg-[#FFF1F2] text-[#9F1239] border border-[#FECDD3]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#E11D48]"></span>
+                        Requires Attention
+                      </span>
+<div class="text-[11px] text-[#9F1239] mt-0.5 font-medium">Name mismatch</div>
+</div>
+</td>
+<td class="py-3 px-3 text-[#64748B] text-[12px]">28m ago</td>
+<td class="py-3 px-3.5 pr-4 text-right">
+<span class="inline-flex items-center gap-1 text-[12px] font-semibold text-[#527A9E]">
+                      Viewing •
+                    </span>
+</td>
+</tr>
+<!-- Row 3: Rajesh Kumar Verma -->
+<tr class="hover:bg-[#F8F9FA] transition-colors cursor-pointer group">
+<td class="py-3 px-3.5 pl-4 font-mono text-[12px] font-medium text-[#334155]">APP-3085</td>
+<td class="py-3 px-3">
+<div class="font-semibold text-[14px] text-[#0F172A] leading-snug">Rajesh Kumar Verma</div>
+<div class="text-[12px] text-[#94A3B8]">+91 94451 •••••</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">Aadhaar</span>
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">Driving Licence</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[12px] font-medium bg-[#FFF1F2] text-[#9F1239] border border-[#FECDD3]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#E11D48]"></span>
+                      Requires Attention
+                    </span>
+<div class="text-[11px] text-[#9F1239] mt-0.5 font-medium">DOB scan obscure</div>
+</td>
+<td class="py-3 px-3 text-[#64748B] text-[12px]">45m ago</td>
+<td class="py-3 px-3.5 pr-4 text-right">
+<span class="text-[12px] font-medium text-[#527A9E] group-hover:underline">View details →</span>
+</td>
+</tr>
+<!-- Row 4: Ananya Deshmukh -->
+<tr class="hover:bg-[#F8F9FA] transition-colors cursor-pointer group">
+<td class="py-3 px-3.5 pl-4 font-mono text-[12px] font-medium text-[#334155]">APP-3072</td>
+<td class="py-3 px-3">
+<div class="font-semibold text-[14px] text-[#0F172A] leading-snug">Ananya Deshmukh</div>
+<div class="text-[12px] text-[#94A3B8]">ananya.d••••@cloud.in</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">Passport</span>
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">PAN</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[12px] font-medium bg-[#F0F5FA] text-[#2C5282] border border-[#CFE0F0]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#527A9E]"></span>
+                      Pending Review
+                    </span>
+</td>
+<td class="py-3 px-3 text-[#64748B] text-[12px]">2h ago</td>
+<td class="py-3 px-3.5 pr-4 text-right">
+<span class="text-[12px] font-medium text-[#527A9E] group-hover:underline">View details →</span>
+</td>
+</tr>
+<!-- Row 5: Vikram Malhotra -->
+<tr class="hover:bg-[#F8F9FA] transition-colors cursor-pointer group">
+<td class="py-3 px-3.5 pl-4 font-mono text-[12px] font-medium text-[#334155]">APP-3066</td>
+<td class="py-3 px-3">
+<div class="font-semibold text-[14px] text-[#0F172A] leading-snug">Vikram Malhotra</div>
+<div class="text-[12px] text-[#94A3B8]">v.malhotra••••@corp.org</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">Voter ID</span>
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">PAN</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[12px] font-medium bg-[#FFF1F2] text-[#9F1239] border border-[#FECDD3]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#E11D48]"></span>
+                      Requires Attention
+                    </span>
+<div class="text-[11px] text-[#9F1239] mt-0.5 font-medium">Address mismatch</div>
+</td>
+<td class="py-3 px-3 text-[#64748B] text-[12px]">3h ago</td>
+<td class="py-3 px-3.5 pr-4 text-right">
+<span class="text-[12px] font-medium text-[#527A9E] group-hover:underline">View details →</span>
+</td>
+</tr>
+<!-- Row 6: Meera Venkatesh -->
+<tr class="hover:bg-[#F8F9FA] transition-colors cursor-pointer group">
+<td class="py-3 px-3.5 pl-4 font-mono text-[12px] font-medium text-[#334155]">APP-3058</td>
+<td class="py-3 px-3">
+<div class="font-semibold text-[14px] text-[#0F172A] leading-snug">Meera Venkatesh</div>
+<div class="text-[12px] text-[#94A3B8]">m.venkat••••@outlook.com</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">Aadhaar</span>
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">PAN</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[12px] font-medium bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+                      Verified
+                    </span>
+</td>
+<td class="py-3 px-3 text-[#64748B] text-[12px]">4h ago</td>
+<td class="py-3 px-3.5 pr-4 text-right">
+<span class="text-[12px] font-medium text-[#527A9E] group-hover:underline">View details →</span>
+</td>
+</tr>
+<!-- Row 7: Rohit Kulkarni -->
+<tr class="hover:bg-[#F8F9FA] transition-colors cursor-pointer group">
+<td class="py-3 px-3.5 pl-4 font-mono text-[12px] font-medium text-[#334155]">APP-3049</td>
+<td class="py-3 px-3">
+<div class="font-semibold text-[14px] text-[#0F172A] leading-snug">Rohit Kulkarni</div>
+<div class="text-[12px] text-[#94A3B8]">+91 98200 •••••</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">Aadhaar</span>
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">Driving Licence</span>
+<span class="px-2 py-0.5 bg-[#F1F5F9] text-[#334155] rounded text-[11px] font-medium">PAN</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[12px] font-medium bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+                      Verified
+                    </span>
+</td>
+<td class="py-3 px-3 text-[#64748B] text-[12px]">Yesterday</td>
+<td class="py-3 px-3.5 pr-4 text-right">
+<span class="text-[12px] font-medium text-[#527A9E] group-hover:underline">View details →</span>
+</td>
+</tr>
+</tbody></table>
+</div>
+<!-- Pagination Bar -->
+<div class="px-4 py-2.5 border-t border-[#E2E8F0] bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px]">
+<span class="text-[#64748B]">
+              Showing <span class="font-medium text-[#0F172A]">1–7</span> of <span class="font-medium text-[#0F172A]">842</span> applicants
+            </span>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 text-[11px] font-medium border border-[#E2E8F0] bg-white text-[#64748B] rounded disabled:opacity-40" disabled="" type="button">
+                Previous
+              </button>
+<div class="flex items-center gap-1">
+<span class="px-2 py-1 text-[11px] bg-[#111827] text-white rounded font-medium">1</span>
+<span class="px-2 py-1 text-[11px] text-[#64748B] hover:bg-[#F1F5F9] rounded cursor-pointer">2</span>
+<span class="px-2 py-1 text-[11px] text-[#64748B] hover:bg-[#F1F5F9] rounded cursor-pointer">3</span>
+<span class="text-[#94A3B8] px-1 text-[11px]">…</span>
+<span class="px-2 py-1 text-[11px] text-[#64748B] hover:bg-[#F1F5F9] rounded cursor-pointer">121</span>
+</div>
+<button class="px-2.5 py-1 text-[11px] font-medium border border-[#E2E8F0] bg-white text-[#0F172A] hover:bg-[#F8F9FA] rounded transition-colors" type="button">
+                Next
+              </button>
+</div>
+</div>
+</div>
+<!-- Right Dossier / Inspector Panel (4 Cols on desktop, compact & clean) -->
+<div class="lg:col-span-5 xl:col-span-4 bg-white border border-[#E2E8F0] rounded shadow-xs overflow-hidden sticky top-20"><!-- Dossier Header -->
+<div class="p-4 border-b border-[#E2E8F0] bg-[#FAFAFA] flex items-start justify-between">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-mono text-[12px] text-[#64748B] font-medium">APP-3091</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#FFF1F2] text-[#9F1239] text-[11px] font-medium border border-[#FECDD3]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#E11D48]"></span>
+                  Requires Attention
+                </span>
+</div>
+<h2 class="text-[22px] font-bold text-[#0F172A] tracking-tight">
+                Priya Sharma
+              </h2>
+</div>
+<button class="w-7 h-7 flex items-center justify-center rounded text-[#94A3B8] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors text-[15px] font-medium" title="Close Inspector" type="button">
+              ✕
+            </button>
+</div>
+<div class="divide-y divide-[#E2E8F0]">
+<!-- Section 1: Applicant Profile -->
+<div class="p-4 space-y-3">
+<span class="text-[13px] font-semibold uppercase tracking-wider text-[#64748B] block">Applicant Profile</span>
+<div class="grid grid-cols-2 gap-y-2.5 gap-x-4 text-[13px]">
+<div>
+<div class="text-[12px] text-[#94A3B8]">Full Legal Name</div>
+<div class="font-semibold text-[14px] text-[#0F172A]">Priya Sharma</div>
+</div>
+<div>
+<div class="text-[12px] text-[#94A3B8]">Dossier Created</div>
+<div class="font-medium text-[13px] text-[#0F172A]">18 Oct 2024</div>
+</div>
+<div>
+<div class="text-[12px] text-[#94A3B8]">Contact Phone</div>
+<div class="font-mono text-[13px] text-[#0F172A]">+91 98765 •••••</div>
+</div>
+<div>
+<div class="text-[12px] text-[#94A3B8]">Contact Email</div>
+<div class="font-mono text-[13px] text-[#0F172A]">p••••••@example.com</div>
+</div>
+</div>
+</div>
+<!-- Section 2: Submitted KYC Documents -->
+<div class="p-4 space-y-3">
+<div class="flex items-center justify-between">
+<span class="text-[13px] font-semibold uppercase tracking-wider text-[#64748B]">Submitted Documents (3)</span>
+<span class="text-[11px] text-[#94A3B8]">Strictly masked</span>
+</div>
+<!-- Doc 1: PAN -->
+<div class="p-3 bg-[#F8F9FA] border border-[#E2E8F0] rounded space-y-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[17px] text-[#64748B]">badge</span>
+<span class="font-medium text-[13px] text-[#0F172A]">PAN Card</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#ECFDF5] text-[#065F46] text-[11px] font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span> Verified
+                  </span>
+</div>
+<div class="flex items-center justify-between text-[12px] text-[#64748B] pt-1.5 border-t border-[#E2E8F0]">
+<span>ID: <span class="font-mono font-medium text-[#0F172A]">ABCPS••••K</span></span>
+<span>Conf: 99.4%</span>
+</div>
+</div>
+<!-- Doc 2: Aadhaar (Flagged) -->
+<div class="p-3 bg-[#FFF9F9] border border-[#FECDD3] rounded space-y-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[17px] text-[#E11D48]">featured_play_list</span>
+<span class="font-medium text-[13px] text-[#0F172A]">Aadhaar Card</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#FFF1F2] text-[#9F1239] text-[11px] font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-[#E11D48]"></span> Attention
+                  </span>
+</div>
+<div class="flex items-center justify-between text-[12px] pt-1.5 border-t border-[#FECDD3]">
+<span class="text-[#64748B]">ID: <span class="font-mono font-medium text-[#0F172A]">•••• •••• 8912</span></span>
+<span class="text-[#E11D48] font-medium text-[11px]">Discrepancy</span>
+</div>
+</div>
+<!-- Doc 3: Passport -->
+<div class="p-3 bg-[#F8F9FA] border border-[#E2E8F0] rounded space-y-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[17px] text-[#64748B]">flight_takeoff</span>
+<span class="font-medium text-[13px] text-[#0F172A]">Passport</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F0F5FA] text-[#2C5282] text-[11px] font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-[#527A9E]"></span> Pending
+                  </span>
+</div>
+<div class="flex items-center justify-between text-[12px] text-[#64748B] pt-1.5 border-t border-[#E2E8F0]">
+<span>ID: <span class="font-mono font-medium text-[#0F172A]">Z••••••8</span></span>
+<span>Conf: 94.1%</span>
+</div>
+</div>
+</div>
+<!-- Section 3: Discrepancy Alert -->
+<div class="p-4 space-y-2.5">
+<span class="text-[13px] font-semibold uppercase tracking-wider text-[#64748B] block">Cross-Document Audit</span>
+<div class="p-3.5 bg-[#FFF1F2] border-l-2 border-l-[#E11D48] rounded-r space-y-2 text-[13px]">
+<div class="flex items-center gap-1.5 text-[#9F1239] font-semibold text-[13px]">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+                  Name mismatch detected
+                </div>
+<p class="text-[#4C0519] leading-relaxed text-[13px]">
+                  PAN shows <strong class="font-semibold text-[#0F172A]">"Priya Sharma"</strong>, while Aadhaar OCR extracted <strong class="font-semibold text-[#0F172A]">"Priya Sarma"</strong> (variance: missing 'h').
+                </p>
+<div class="pt-2 border-t border-[#FECDD3] flex items-center justify-between text-[12px] text-[#9F1239]">
+<span>Confidence: <span class="font-mono font-semibold">78.2%</span></span>
+<button class="font-medium underline hover:text-[#0F172A] transition-colors" type="button">Compare scans</button>
+</div>
+</div>
+</div>
+<!-- Section 4: Action Footer -->
+<div class="p-4 bg-[#FAFAFA] space-y-2">
+<button class="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#111827] hover:bg-[#1E293B] text-white text-[13px] font-medium rounded transition-colors shadow-xs" type="button">
+                Open verification review →
+              </button>
+<div class="flex items-center gap-2">
+<button class="flex-1 py-2 px-2 bg-white border border-[#E2E8F0] hover:bg-[#F8F9FA] text-[#0F172A] text-[12px] font-medium rounded transition-colors" type="button">
+                  Mark resolved
+                </button>
+<button class="flex-1 py-2 px-2 bg-white border border-[#E2E8F0] hover:bg-[#F8F9FA] text-[#64748B] hover:text-[#0F172A] text-[12px] font-medium rounded transition-colors" type="button">
+                  Request re-upload
+                </button>
+</div>
+</div>
+</div></div>
+</div>
+</div>
+</main>
+<!-- Clean Subtle Footer -->
+<footer class="w-full bg-white border-t border-[#E2E8F0] mt-8 py-3">
+<div class="max-w-[1536px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[#64748B] text-[11px]">
+<div>Document Verification System · Internal Operations</div>
+<div class="font-mono text-[#94A3B8]">Confidential · Demo records</div>
+</div>
+</footer>
+
+
+</body></html>

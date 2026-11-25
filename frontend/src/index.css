@@ -1,0 +1,19 @@
+/* Global reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Main document styling */
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f5f7fb;
+  color: #1e293b;
+  min-height: 100vh;
+}
+
+/* Remove default button font differences */
+button {
+  font-family: inherit;
+}

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>VeriDoc AI - Document Verification System</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-surface":"#0b1c30","surface-tint":"#565e74","primary-fixed-dim":"#bec6e0","surface-container-highest":"#d3e4fe","surface-container-high":"#dce9ff","primary":"#000000","on-primary-container":"#7c839b","background":"#f8f9ff","secondary-container":"#645efb","on-secondary-fixed-variant":"#3323cc","on-tertiary-container":"#069669","surface-dim":"#cbdbf5","on-secondary":"#ffffff","inverse-primary":"#bec6e0","on-background":"#0b1c30","inverse-on-surface":"#eaf1ff","outline":"#76777d","outline-variant":"#c6c6cd","surface-container-lowest":"#ffffff","inverse-surface":"#213145","on-primary-fixed":"#131b2e","on-surface-variant":"#45464d","secondary-fixed-dim":"#c3c0ff","error-container":"#ffdad6","surface":"#f8f9ff","surface-bright":"#f8f9ff","on-error":"#ffffff","on-tertiary-fixed-variant":"#005137","primary-container":"#131b2e","on-error-container":"#93000a","on-tertiary":"#ffffff","on-primary":"#ffffff","tertiary":"#000000","secondary":"#4b41e1","on-tertiary-fixed":"#002114","tertiary-fixed":"#85f8c4","tertiary-container":"#002114","on-secondary-container":"#fffbff","on-secondary-fixed":"#0f0069","primary-fixed":"#dae2fd","secondary-fixed":"#e2dfff","surface-container-low":"#eff4ff","tertiary-fixed-dim":"#68dba9","surface-container":"#e5eeff","on-primary-fixed-variant":"#3f465c","surface-variant":"#d3e4fe","error":"#ba1a1a"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter":"1rem","space-xl":"2rem","space-sm":"0.5rem","margin":"1.5rem","space-md":"0.75rem","space-lg":"1.25rem","space-xs":"0.25rem"},"fontFamily":{"label-lg":["Inter"],"body-md":["Inter"],"label-md":["Inter"],"body-lg":["Inter"],"headline-xl":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"label-sm":["Inter"],"data-mono":["Inter"],"headline-lg":["Plus Jakarta Sans"],"body-sm":["Inter"]},"fontSize":{"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.01em","fontWeight":"600"}],"body-md":["13px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.03em","fontWeight":"600"}],"body-lg":["15px",{"lineHeight":"24px","letterSpacing":"-0.005em","fontWeight":"400"}],"headline-xl":["30px",{"lineHeight":"38px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-sm":["18px",{"lineHeight":"26px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"700"}],"data-mono":["13px",{"lineHeight":"20px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}]}}}}</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-[#FFFFFF] border-b border-[#E2E8F0] h-14"><div class="max-w-[1720px] h-full mx-auto px-6 flex items-center justify-between gap-6">
+<!-- Brand -->
+<div class="flex items-center gap-2 shrink-0">
+<span class="w-2 h-2 rounded-full bg-[#527A9E]"></span>
+<span class="text-[12px] font-semibold tracking-wider text-[#0F172A] uppercase">Document Verification</span>
+</div>
+<!-- Main Navigation -->
+<nav class="hidden lg:flex items-center gap-6 shrink-0 h-full" data-active-classes="text-[#0F172A] font-semibold border-b-2 border-[#0F172A]">
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center border-b-2 border-transparent" data-path="overview" href="#">Overview</a>
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center border-b-2 border-transparent" data-path="upload-documents" href="#">Upload Documents</a>
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center border-b-2 border-transparent" data-path="applicants" href="#">Applicants</a>
+<a class="text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] transition-colors h-full flex items-center border-b-2 border-transparent" data-path="verification-queue" href="#">Verification Queue</a>
+<a aria-current="page" class="transition-colors h-full flex items-center text-[#0F172A] font-semibold border-b-2 border-[#0F172A]" data-path="reports" href="#">Reports</a>
+</nav>
+<!-- Right controls: Search & Officer -->
+<div class="flex items-center gap-4 shrink-0">
+<div class="relative hidden sm:flex items-center">
+<span class="material-symbols-outlined absolute left-2.5 text-[16px] text-[#94A3B8]">search</span>
+<input class="text-[12px] pl-8 pr-3 py-1.5 w-56 bg-[#F8F9FA] border border-[#E2E8F0] rounded text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#527A9E] focus:bg-white transition-colors" placeholder="Search records, docs, IDs..." type="text"/>
+</div>
+<div class="h-4 w-px bg-[#E2E8F0] hidden sm:block"></div>
+<div class="flex items-center gap-2.5">
+<div class="text-right hidden sm:block">
+<div class="text-[12px] font-medium text-[#0F172A] leading-tight">Arjun Mehta</div>
+<div class="text-[11px] text-[#64748B] leading-tight">Review Officer</div>
+</div>
+<div class="w-7 h-7 rounded bg-[#111827] flex items-center justify-center text-white text-[11px] font-medium">
+        AM
+      </div>
+</div>
+</div>
+</div></header><main class="w-full pt-14 bg-surface min-h-[calc(100vh-48px)]"><div class="flex flex-col w-full">
+<div class="max-w-[1720px] mx-auto px-6 py-6 w-full flex flex-col gap-6">
+<!-- Page Header & Action Controls -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 font-label-md text-label-md text-slate-400 tracking-wider uppercase">
+<span>REPORTS</span>
+<span class="text-slate-300">/</span>
+<span class="text-slate-600 font-semibold">KYC Analytics &amp; Audit</span>
+</div>
+<h1 class="font-headline-xl text-slate-900 tracking-tight text-[36px] sm:text-[40px] leading-tight">
+          Reports<span class="text-secondary">.</span>
+</h1>
+<p class="font-body-md text-slate-500 max-w-2xl text-[14px]">
+          Review document processing performance, verification outcomes and validation results across operational dossiers.
+        </p>
+</div>
+<!-- Controls -->
+<div class="flex items-center gap-3 shrink-0">
+<div class="relative">
+<button class="inline-flex items-center gap-2 px-3.5 py-2 bg-white rounded-lg text-slate-700 font-label-lg text-[13px] shadow-sm hover:bg-slate-50 transition-colors" id="dateRangeBtn" type="button">
+<span class="material-symbols-outlined text-[18px] text-slate-400">calendar_today</span>
+<span>Past 30 Days (18 Sep – 18 Oct 2024)</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
+</button>
+</div>
+<button class="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-lg text-slate-700 hover:bg-slate-50 font-label-lg text-[13px] shadow-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px] text-slate-500">file_download</span>
+<span>Export Report</span>
+</button>
+</div>
+</div>
+<!-- Section A: 4 Summary Metric Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Total Documents Processed -->
+<div class="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-slate-500 uppercase tracking-wider text-[11px]">Total Documents Processed</span>
+<span class="p-1.5 rounded-lg bg-surface-container text-slate-700 material-symbols-outlined text-[18px]">document_scanner</span>
+</div>
+<div class="mt-4 flex flex-col">
+<span class="font-headline-lg text-slate-900 text-[28px] font-bold leading-none tracking-tight">1,428</span>
+<div class="mt-2 flex items-center gap-1.5 text-slate-500 font-body-sm text-[12px]">
+<span class="text-on-tertiary-container font-semibold flex items-center text-[12px]">
+<span class="material-symbols-outlined text-[14px] font-semibold">arrow_upward</span>12%
+            </span>
+<span>vs prior period</span>
+</div>
+</div>
+</div>
+<!-- Successfully Verified -->
+<div class="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-slate-500 uppercase tracking-wider text-[11px]">Successfully Verified</span>
+<span class="p-1.5 rounded-lg bg-emerald-50 text-on-tertiary-container material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div class="mt-4 flex flex-col">
+<span class="font-headline-lg text-on-tertiary-container text-[28px] font-bold leading-none tracking-tight">1,240</span>
+<div class="mt-2 flex items-center gap-1.5 text-slate-500 font-body-sm text-[12px]">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span>
+<span>86.8% approval rate</span>
+</div>
+</div>
+</div>
+<!-- Pending Review -->
+<div class="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-slate-500 uppercase tracking-wider text-[11px]">Pending Review</span>
+<span class="p-1.5 rounded-lg bg-surface-container-high text-secondary material-symbols-outlined text-[18px]">hourglass_empty</span>
+</div>
+<div class="mt-4 flex flex-col">
+<span class="font-headline-lg text-[#0284c7] text-[28px] font-bold leading-none tracking-tight">124</span>
+<div class="mt-2 flex items-center gap-1.5 text-slate-500 font-body-sm text-[12px]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0284c7]"></span>
+<span>In operational queue</span>
+</div>
+</div>
+</div>
+<!-- Requires Attention -->
+<div class="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-slate-500 uppercase tracking-wider text-[11px]">Requires Attention</span>
+<span class="p-1.5 rounded-lg bg-error-container text-error material-symbols-outlined text-[18px]">report_problem</span>
+</div>
+<div class="mt-4 flex flex-col">
+<span class="font-headline-lg text-error text-[28px] font-bold leading-none tracking-tight">64</span>
+<div class="mt-2 flex items-center gap-1.5 text-slate-500 font-body-sm text-[12px]">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+<span>Discrepancies &amp; re-uploads</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section B: Two-Column Middle Section -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+<!-- Left Column (7 cols): Document Type Breakdown -->
+<div class="lg:col-span-7 bg-white rounded-xl p-6 shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-1">
+<h2 class="font-headline-sm text-slate-900 text-[18px] font-semibold">Document Type Breakdown</h2>
+<span class="font-data-mono text-[12px] text-slate-400">Total: 1,428</span>
+</div>
+<p class="font-body-sm text-slate-500 mb-6 text-[13px]">Processed volume across supported KYC credentials in current reporting cycle.</p>
+<div class="flex flex-col gap-4">
+<!-- 1. Aadhaar Card -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[13px]">
+<div class="flex items-center gap-2.5">
+<span class="w-7 h-7 rounded bg-surface-container flex items-center justify-center text-slate-700">
+<span class="material-symbols-outlined text-[16px]">badge</span>
+</span>
+<span class="font-label-lg text-slate-800">Aadhaar Card</span>
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-slate-600 font-medium">UIDAI</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-data-mono font-medium text-slate-700">612 docs</span>
+<span class="font-data-mono text-slate-500 w-12 text-right">42.9%</span>
+</div>
+</div>
+<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+<div class="bg-slate-800 h-full rounded-full" style="width: 42.9%"></div>
+</div>
+</div>
+<!-- 2. PAN Card -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[13px]">
+<div class="flex items-center gap-2.5">
+<span class="w-7 h-7 rounded bg-surface-container flex items-center justify-center text-slate-700">
+<span class="material-symbols-outlined text-[16px]">credit_card</span>
+</span>
+<span class="font-label-lg text-slate-800">PAN Card</span>
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-slate-600 font-medium">ITD</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-data-mono font-medium text-slate-700">485 docs</span>
+<span class="font-data-mono text-slate-500 w-12 text-right">34.0%</span>
+</div>
+</div>
+<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+<div class="bg-slate-600 h-full rounded-full" style="width: 34.0%"></div>
+</div>
+</div>
+<!-- 3. Indian Passport -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[13px]">
+<div class="flex items-center gap-2.5">
+<span class="w-7 h-7 rounded bg-surface-container flex items-center justify-center text-slate-700">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+</span>
+<span class="font-label-lg text-slate-800">Indian Passport</span>
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-slate-600 font-medium">MEA</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-data-mono font-medium text-slate-700">142 docs</span>
+<span class="font-data-mono text-slate-500 w-12 text-right">9.9%</span>
+</div>
+</div>
+<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+<div class="bg-[#0284c7] h-full rounded-full" style="width: 9.9%"></div>
+</div>
+</div>
+<!-- 4. Voter ID -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[13px]">
+<div class="flex items-center gap-2.5">
+<span class="w-7 h-7 rounded bg-surface-container flex items-center justify-center text-slate-700">
+<span class="material-symbols-outlined text-[16px]">how_to_vote</span>
+</span>
+<span class="font-label-lg text-slate-800">Voter ID (EPIC)</span>
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-slate-600 font-medium">ECI</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-data-mono font-medium text-slate-700">118 docs</span>
+<span class="font-data-mono text-slate-500 w-12 text-right">8.3%</span>
+</div>
+</div>
+<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 8.3%"></div>
+</div>
+</div>
+<!-- 5. Driving Licence -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[13px]">
+<div class="flex items-center gap-2.5">
+<span class="w-7 h-7 rounded bg-surface-container flex items-center justify-center text-slate-700">
+<span class="material-symbols-outlined text-[16px]">drive_eta</span>
+</span>
+<span class="font-label-lg text-slate-800">Driving Licence</span>
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-slate-600 font-medium">SARATHI</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-data-mono font-medium text-slate-700">71 docs</span>
+<span class="font-data-mono text-slate-500 w-12 text-right">5.0%</span>
+</div>
+</div>
+<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+<div class="bg-[#d97706] h-full rounded-full" style="width: 5.0%"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-4 bg-slate-50/70 rounded-lg p-3 flex items-center justify-between text-[12px] text-slate-500">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-slate-400">info</span>
+            OCR processing engine: Tesseract v5.3 + Custom LayoutLMv3 Indic fine-tuning
+          </span>
+<span class="font-data-mono text-slate-700 font-semibold">99.1% OCR uptime</span>
+</div>
+</div>
+<!-- Right Column (5 cols): Validation Overview -->
+<div class="lg:col-span-5 bg-white rounded-xl p-6 shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-1">
+<h2 class="font-headline-sm text-slate-900 text-[18px] font-semibold">Validation Overview</h2>
+<span class="font-label-sm px-2 py-0.5 rounded bg-emerald-50 text-on-tertiary-container font-semibold">Healthy</span>
+</div>
+<p class="font-body-sm text-slate-500 mb-5 text-[13px]">Overall verification outcomes &amp; audit checks across all ingest channels.</p>
+<div class="flex flex-col gap-3.5">
+<!-- Successful Validations -->
+<div class="p-3.5 rounded-lg bg-slate-50/60 flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container"></span>
+<span class="font-label-lg text-slate-900 text-[13px]">Successful Validations</span>
+</div>
+<span class="font-data-mono text-[13px] font-semibold text-slate-800">1,240 <span class="text-slate-400 font-normal">(86.8%)</span></span>
+</div>
+<p class="text-[12px] text-slate-500 pl-4 font-body-sm leading-relaxed">
+                Auto-matched OCR and valid integrity seals without variance.
+              </p>
+</div>
+<!-- Cross-Document Discrepancies -->
+<div class="p-3.5 rounded-lg bg-amber-50/40 flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-[#d97706]"></span>
+<span class="font-label-lg text-slate-900 text-[13px]">Cross-Document Discrepancies</span>
+</div>
+<span class="font-data-mono text-[13px] font-semibold text-[#b45309]">48 <span class="text-slate-400 font-normal">(3.4%)</span></span>
+</div>
+<p class="text-[12px] text-slate-500 pl-4 font-body-sm leading-relaxed">
+                Name transliteration or DOB variance across multiple submitted documents.
+              </p>
+</div>
+<!-- Failed / Invalid Validations -->
+<div class="p-3.5 rounded-lg bg-rose-50/30 flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="font-label-lg text-slate-900 text-[13px]">Failed / Invalid Validations</span>
+</div>
+<span class="font-data-mono text-[13px] font-semibold text-error">16 <span class="text-slate-400 font-normal">(1.1%)</span></span>
+</div>
+<p class="text-[12px] text-slate-500 pl-4 font-body-sm leading-relaxed">
+                Unreadable scan quality, expired validity, or invalid ID syntax.
+              </p>
+</div>
+<!-- Pending Review / Manual Triage -->
+<div class="p-3.5 rounded-lg bg-sky-50/30 flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-[#0284c7]"></span>
+<span class="font-label-lg text-slate-900 text-[13px]">Pending Review / Manual Triage</span>
+</div>
+<span class="font-data-mono text-[13px] font-semibold text-[#0369a1]">124 <span class="text-slate-400 font-normal">(8.7%)</span></span>
+</div>
+<p class="text-[12px] text-slate-500 pl-4 font-body-sm leading-relaxed">
+                Awaiting review officer sign-off in the active verification queue.
+              </p>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-[11px] text-slate-400">
+<span>CKYC registry sync latency: <strong class="text-slate-600 font-data-mono">420ms</strong></span>
+<span>Ledger hash: <span class="font-data-mono text-slate-600">e82f..90a1</span></span>
+</div>
+</div>
+</div>
+<!-- Section C: Recent Verification Activity Table -->
+<div class="bg-white rounded-xl shadow-sm flex flex-col overflow-hidden">
+<!-- Card Header -->
+<div class="p-6 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<h2 class="font-headline-sm text-slate-900 text-[19px] font-semibold">Recent Verification Activity</h2>
+<p class="font-body-sm text-slate-500 text-[13px]">Audited records from the latest processing ledger and verification checkpoints.</p>
+</div>
+<!-- Filter Controls Bar -->
+<div class="flex flex-wrap items-center gap-3">
+<!-- Document Filter -->
+<div class="relative">
+<select class="appearance-none bg-[#F8F9FA] rounded text-[12px] font-label-lg text-slate-700 pl-3 pr-8 py-1.5 focus:outline-none focus:bg-white cursor-pointer transition-colors" id="docTypeFilter">
+<option value="ALL">All Document Types</option>
+<option value="Aadhaar">Aadhaar Card</option>
+<option value="PAN">PAN Card</option>
+<option value="Passport">Passport</option>
+<option value="Voter ID">Voter ID</option>
+<option value="Driving Licence">Driving Licence</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-2 top-2 text-[16px] text-slate-400">expand_more</span>
+</div>
+<!-- Status Filter -->
+<div class="relative">
+<select class="appearance-none bg-[#F8F9FA] rounded text-[12px] font-label-lg text-slate-700 pl-3 pr-8 py-1.5 focus:outline-none focus:bg-white cursor-pointer transition-colors" id="statusFilter">
+<option value="ALL">All Statuses</option>
+<option value="Verified">Verified</option>
+<option value="Requires Attention">Requires Attention</option>
+<option value="Pending Review">Pending Review</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-2 top-2 text-[16px] text-slate-400">expand_more</span>
+</div>
+<!-- Search Input -->
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-2.5 text-[16px] text-slate-400">search</span>
+<input class="text-[12px] pl-8 pr-3 py-1.5 w-48 sm:w-56 bg-[#F8F9FA] rounded text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white transition-colors" id="activitySearch" placeholder="Filter activity records..." type="text"/>
+</div>
+</div>
+</div>
+<!-- Table Container -->
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-slate-50/80 font-label-sm text-[11px] text-slate-500 uppercase tracking-wider">
+<th class="py-3 px-6 font-semibold" scope="col">Applicant ID</th>
+<th class="py-3 px-6 font-semibold" scope="col">Applicant Name</th>
+<th class="py-3 px-6 font-semibold" scope="col">Document Type</th>
+<th class="py-3 px-6 font-semibold" scope="col">Status</th>
+<th class="py-3 px-6 font-semibold" scope="col">Date &amp; Time</th>
+<th class="py-3 px-6 font-semibold text-right" scope="col">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-[13px] text-slate-700" id="activityTableBody">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-6 font-data-mono font-medium text-slate-900">APP-3091</td>
+<td class="py-3.5 px-6">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-600">PS</span>
+<span class="font-medium text-slate-900">Priya Sharma</span>
+</div>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 text-slate-600 font-label-md">
+<span class="material-symbols-outlined text-[15px] text-slate-400">credit_card</span>
+                  PAN Card
+                </span>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-error">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                  Requires Attention
+                </span>
+</td>
+<td class="py-3.5 px-6 font-data-mono text-[12px] text-slate-500">18 Oct 2024, 10:45 AM</td>
+<td class="py-3.5 px-6 text-right">
+<a class="inline-flex items-center gap-1 text-[12px] font-label-lg text-slate-700 hover:text-slate-950 font-medium" href="#">
+                  View dossier <span class="text-slate-400">→</span>
+</a>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-6 font-data-mono font-medium text-slate-900">APP-3085</td>
+<td class="py-3.5 px-6">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-600">RK</span>
+<span class="font-medium text-slate-900">Rajesh Kumar Verma</span>
+</div>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 text-slate-600 font-label-md">
+<span class="material-symbols-outlined text-[15px] text-slate-400">badge</span>
+                  Aadhaar Card
+                </span>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-[#0284c7]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0284c7]"></span>
+                  Pending Review
+                </span>
+</td>
+<td class="py-3.5 px-6 font-data-mono text-[12px] text-slate-500">18 Oct 2024, 10:20 AM</td>
+<td class="py-3.5 px-6 text-right">
+<a class="inline-flex items-center gap-1 text-[12px] font-label-lg text-slate-700 hover:text-slate-950 font-medium" href="#">
+                  View dossier <span class="text-slate-400">→</span>
+</a>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-6 font-data-mono font-medium text-slate-900">APP-3104</td>
+<td class="py-3.5 px-6">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-600">SN</span>
+<span class="font-medium text-slate-900">Siddharth Nair</span>
+</div>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 text-slate-600 font-label-md">
+<span class="material-symbols-outlined text-[15px] text-slate-400">fact_check</span>
+                  Aadhaar + PAN
+                </span>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-on-tertiary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span>
+                  Verified
+                </span>
+</td>
+<td class="py-3.5 px-6 font-data-mono text-[12px] text-slate-500">18 Oct 2024, 09:50 AM</td>
+<td class="py-3.5 px-6 text-right">
+<a class="inline-flex items-center gap-1 text-[12px] font-label-lg text-slate-700 hover:text-slate-950 font-medium" href="#">
+                  View dossier <span class="text-slate-400">→</span>
+</a>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-6 font-data-mono font-medium text-slate-900">APP-3072</td>
+<td class="py-3.5 px-6">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-600">AD</span>
+<span class="font-medium text-slate-900">Ananya Deshmukh</span>
+</div>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 text-slate-600 font-label-md">
+<span class="material-symbols-outlined text-[15px] text-slate-400">menu_book</span>
+                  Indian Passport
+                </span>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-[#0284c7]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0284c7]"></span>
+                  Pending Review
+                </span>
+</td>
+<td class="py-3.5 px-6 font-data-mono text-[12px] text-slate-500">18 Oct 2024, 09:15 AM</td>
+<td class="py-3.5 px-6 text-right">
+<a class="inline-flex items-center gap-1 text-[12px] font-label-lg text-slate-700 hover:text-slate-950 font-medium" href="#">
+                  View dossier <span class="text-slate-400">→</span>
+</a>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-6 font-data-mono font-medium text-slate-900">APP-3066</td>
+<td class="py-3.5 px-6">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-600">VM</span>
+<span class="font-medium text-slate-900">Vikram Malhotra</span>
+</div>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 text-slate-600 font-label-md">
+<span class="material-symbols-outlined text-[15px] text-slate-400">how_to_vote</span>
+                  Voter ID
+                </span>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-error">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                  Requires Attention
+                </span>
+</td>
+<td class="py-3.5 px-6 font-data-mono text-[12px] text-slate-500">18 Oct 2024, 08:50 AM</td>
+<td class="py-3.5 px-6 text-right">
+<a class="inline-flex items-center gap-1 text-[12px] font-label-lg text-slate-700 hover:text-slate-950 font-medium" href="#">
+                  View dossier <span class="text-slate-400">→</span>
+</a>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-6 font-data-mono font-medium text-slate-900">APP-3058</td>
+<td class="py-3.5 px-6">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-600">MV</span>
+<span class="font-medium text-slate-900">Meera Venkatesh</span>
+</div>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 text-slate-600 font-label-md">
+<span class="material-symbols-outlined text-[15px] text-slate-400">drive_eta</span>
+                  Driving Licence
+                </span>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-on-tertiary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span>
+                  Verified
+                </span>
+</td>
+<td class="py-3.5 px-6 font-data-mono text-[12px] text-slate-500">17 Oct 2024, 05:30 PM</td>
+<td class="py-3.5 px-6 text-right">
+<a class="inline-flex items-center gap-1 text-[12px] font-label-lg text-slate-700 hover:text-slate-950 font-medium" href="#">
+                  View dossier <span class="text-slate-400">→</span>
+</a>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-6 font-data-mono font-medium text-slate-900">APP-3049</td>
+<td class="py-3.5 px-6">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-600">RK</span>
+<span class="font-medium text-slate-900">Rohit Kulkarni</span>
+</div>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 text-slate-600 font-label-md">
+<span class="material-symbols-outlined text-[15px] text-slate-400">credit_card</span>
+                  PAN Card
+                </span>
+</td>
+<td class="py-3.5 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-on-tertiary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span>
+                  Verified
+                </span>
+</td>
+<td class="py-3.5 px-6 font-data-mono text-[12px] text-slate-500">17 Oct 2024, 04:15 PM</td>
+<td class="py-3.5 px-6 text-right">
+<a class="inline-flex items-center gap-1 text-[12px] font-label-lg text-slate-700 hover:text-slate-950 font-medium" href="#">
+                  View dossier <span class="text-slate-400">→</span>
+</a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer & Pagination -->
+<div class="p-4 px-6 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 font-body-sm text-[12px] text-slate-500">
+<div>
+          Showing <span class="font-semibold text-slate-700">7</span> of <span class="font-semibold text-slate-700">1,428</span> processed records
+        </div>
+<div class="flex items-center gap-1">
+<button class="px-2.5 py-1.5 rounded bg-white text-slate-400 hover:text-slate-700 disabled:opacity-50 text-[12px] font-medium transition-colors" type="button">
+            Previous
+          </button>
+<button class="w-7 h-7 rounded bg-slate-900 text-white font-semibold text-[12px] flex items-center justify-center" type="button">
+            1
+          </button>
+<button class="w-7 h-7 rounded bg-white text-slate-600 hover:bg-slate-100 font-medium text-[12px] flex items-center justify-center transition-colors" type="button">
+            2
+          </button>
+<button class="w-7 h-7 rounded bg-white text-slate-600 hover:bg-slate-100 font-medium text-[12px] flex items-center justify-center transition-colors" type="button">
+            3
+          </button>
+<span class="px-1 text-slate-400">…</span>
+<button class="w-7 h-7 rounded bg-white text-slate-600 hover:bg-slate-100 font-medium text-[12px] flex items-center justify-center transition-colors" type="button">
+            204
+          </button>
+<button class="px-2.5 py-1.5 rounded bg-white text-slate-600 hover:text-slate-900 text-[12px] font-medium transition-colors" type="button">
+            Next
+          </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function initReportsInteractions() {
+    const docFilter = document.getElementById('docTypeFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const searchInput = document.getElementById('activitySearch');
+    const tbody = document.getElementById('activityTableBody');
+
+    if (!tbody || !docFilter || !statusFilter || !searchInput) return;
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    function applyFilters() {
+      const docVal = docFilter.value.toLowerCase();
+      const statusVal = statusFilter.value.toLowerCase();
+      const query = searchInput.value.trim().toLowerCase();
+
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const matchesDoc = docVal === 'all' || text.includes(docVal);
+        const matchesStatus = statusVal === 'all' || text.includes(statusVal);
+        const matchesQuery = query === '' || text.includes(query);
+
+        if (matchesDoc && matchesStatus && matchesQuery) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    docFilter.addEventListener('change', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+    searchInput.addEventListener('input', applyFilters);
+  })();
+</script></main><footer class="w-full bg-white border-t border-[#E2E8F0] mt-8 py-3"><div class="max-w-[1720px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[#64748B] text-[11px]">
+<div>Document Verification System · Internal Operations</div>
+<div class="font-mono text-[#94A3B8]">Confidential · Demo records</div>
+</div></footer>
+</body></html>

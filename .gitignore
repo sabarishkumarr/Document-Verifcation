@@ -1,0 +1,60 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environments
+venv/
+.venv/
+env/
+backend/venv/
+
+# Environment variables & local secrets (NEVER COMMIT SECRETS)
+.env
+.env.local
+.env.*.local
+*.env
+!*.env.example
+
+# SQLite Databases & database backups
+*.db
+*.sqlite
+*.sqlite3
+*.bak*
+backend/database/*.db
+backend/database/*.sqlite
+backend/database/*.bak*
+
+# Upload and processed storage (ignore stored user documents, keep folder structures)
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/uploads/**/*
+storage/processed/*
+!storage/processed/.gitkeep
+storage/processed/**/*
+storage/test_uploads/*
+!storage/test_uploads/.gitkeep
+storage/test_uploads/**/*
+
+# Pytest & test cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+.DS_Store
+
+# Node / Vite build artifacts & dependencies
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+frontend/dist-ssr/
+*.local

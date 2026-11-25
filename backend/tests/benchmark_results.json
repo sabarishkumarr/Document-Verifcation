@@ -1,0 +1,2658 @@
+{
+  "benchmark_metadata": {
+    "dataset_name": "VeriDoc AI - Synthetic KYC Test Dataset",
+    "version": "1.0",
+    "timestamp": "2026-11-23 12:52:27",
+    "ai_model": "gemini-3.5-flash-lite",
+    "tesseract_version": "Tesseract 5.5.3.20260724 available at C:\\Program Files\\Tesseract-OCR\\tesseract.EXE",
+    "total_evaluated": 40
+  },
+  "summary": {
+    "gemini": {
+      "total_documents": 40,
+      "api_success_rate": 100.0,
+      "avg_latency_ms": 4942,
+      "accuracy": {
+        "document_type": 100.0,
+        "name": 97.5,
+        "dob": 97.5,
+        "id_number": 92.5,
+        "address": 78.6,
+        "dates": 100.0
+      },
+      "field_counts": {
+        "document_type": "40/40",
+        "name": "39/40",
+        "dob": "39/40",
+        "id_number": "37/40",
+        "address": "22/28",
+        "dates": "17/17"
+      },
+      "degraded_id_recovery_rate": 100.0,
+      "degraded_id_count": "9/9"
+    },
+    "local_ocr": {
+      "total_documents": 40,
+      "pipeline_success_rate": 100.0,
+      "avg_latency_ms": 661,
+      "accuracy": {
+        "document_type": 87.5,
+        "name": 57.5,
+        "dob": 80.0,
+        "id_number": 37.5,
+        "address": 0.0,
+        "dates": 17.6
+      },
+      "field_counts": {
+        "document_type": "35/40",
+        "name": "23/40",
+        "dob": "32/40",
+        "id_number": "15/40",
+        "address": "0/28",
+        "dates": "3/17"
+      },
+      "degraded_id_recovery_rate": 0.0,
+      "degraded_id_count": "0/9"
+    }
+  },
+  "detailed_results": [
+    {
+      "applicant_id": "APP001",
+      "document_type": "aadhaar",
+      "filename": "aadhaar.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "aadhaar",
+        "name": "Arvind Raghunathan Iyer",
+        "dob": "14/03/1988",
+        "id_number": "0000 4821 7305",
+        "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4754,
+        "doc_type": "aadhaar",
+        "name": "ARVIND RAGHUNATHAN LYER",
+        "id_number": "XXXX-XXXX-7305",
+        "dob": "1988-03-14",
+        "expiry_date": null,
+        "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 714,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "aadhaar",
+        "name": "Arvind Raghunathan lyer",
+        "id_number": "XXXX-XXXX-7305",
+        "dob": "1988-03-14",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP001",
+      "document_type": "pan",
+      "filename": "pan.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "pan",
+        "name": "ARVIND RAGHUNATHAN IYER",
+        "dob": "14/03/1988",
+        "id_number": "SYNPI0000A",
+        "address": null,
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4264,
+        "doc_type": "pan",
+        "name": "ARVIND RAGHUNATHAN IYER",
+        "id_number": "SYNPI0000A",
+        "dob": "1988-03-14",
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 663,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "pan",
+        "name": "SYNPIOOOOA",
+        "id_number": null,
+        "dob": "1988-03-14",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "PAN number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": false,
+          "address": null,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP001",
+      "document_type": "pan",
+      "filename": "pan_front_degraded.jpg",
+      "quality": "degraded",
+      "degradation": "[{'op': 'perspective', 'strength': 0.05}, {'op': 'rotate', 'deg': 8}, {'op': 'shadow', 'strength': 0.35}, {'op': 'noise', 'sigma': 6}]",
+      "expected": {
+        "document_type": "pan",
+        "name": "ARVIND RAGHUNATHAN IYER",
+        "dob": "14/03/1988",
+        "id_number": "SYNPI0000A",
+        "address": null,
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 3984,
+        "doc_type": "pan",
+        "name": "ARVIND RAGHUNATHAN IYER",
+        "id_number": "SYNPI0000A",
+        "dob": "1988-03-14",
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 158,
+        "extraction_method": "tesseract_ocr",
+        "doc_type": "unknown",
+        "name": null,
+        "id_number": null,
+        "dob": null,
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Missing applicant name",
+          "Missing Date of Birth",
+          "Unclassified document type"
+        ],
+        "matches": {
+          "doc_type": false,
+          "name": false,
+          "dob": false,
+          "id_number": false,
+          "address": null,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP001",
+      "document_type": "passport",
+      "filename": "passport.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "passport",
+        "name": "ARVIND RAGHUNATHAN IYER",
+        "dob": "14/03/1988",
+        "id_number": "Z0001001",
+        "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020",
+        "issue_date": "18/06/2019",
+        "expiry_date": "17/06/2029"
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 7236,
+        "doc_type": "passport",
+        "name": "ARVIND RAGHUNATHAN IYER",
+        "id_number": "Z0001001",
+        "dob": "1988-03-14",
+        "expiry_date": "2029-06-17",
+        "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 1719,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "passport",
+        "name": "IYER",
+        "id_number": "Z0001001",
+        "dob": "1988-03-14",
+        "expiry_date": "2019-06-18",
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Passport expired on 2019-06-18 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP001",
+      "document_type": "voter_id",
+      "filename": "voter_id.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "voter_id",
+        "name": "Arvind Raghunathan Iyer",
+        "dob": "14/03/1988",
+        "id_number": "ZZZ0000101",
+        "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4519,
+        "doc_type": "voter_id",
+        "name": "ARVIND RAGHUNATHAN IYER",
+        "id_number": "ZZZ0000101",
+        "dob": "1988-03-14",
+        "expiry_date": null,
+        "address": "Flat 4B, Sample Residency, 17 Lotus Garden Street, Adyar, Chennai, Tamil Nadu - 600020",
+        "manual_review_required": false,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 782,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "voter_id",
+        "name": "Arvind Raghunathan lyer",
+        "id_number": null,
+        "dob": "1988-03-14",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Voter ID (EPIC) number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP001",
+      "document_type": "driving_licence",
+      "filename": "driving_licence.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "driving_licence",
+        "name": "ARVIND RAGHUNATHAN IYER",
+        "dob": "14/03/1988",
+        "id_number": "TN07 0000 0004417",
+        "address": "FLAT 4B, SAMPLE RESIDENCY, 17 LOTUS GARDEN STREET, ADYAR, CHENNAI, TAMIL NADU - 600020",
+        "issue_date": "02/04/2008",
+        "expiry_date": "01/04/2028"
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 5725,
+        "doc_type": "driving_licence",
+        "name": "ARVIND RAGHUNATHAN IYER",
+        "id_number": "TN07 0000 0004417",
+        "dob": "1988-03-14",
+        "expiry_date": "2028-04-01",
+        "address": "FLAT 4B, SAMPLE RESIDENCY, 17 LOTUS GARDEN STREET, ADYAR, CHENNAI, TAMIL NADU - 600020",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 839,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "driving_licence",
+        "name": "ARVIND RAGHUNATHAN IYER",
+        "id_number": null,
+        "dob": "1988-03-14",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Driving Licence number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP002",
+      "document_type": "aadhaar",
+      "filename": "aadhaar.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "aadhaar",
+        "name": "Meera Sundaram Pillai",
+        "dob": "02/11/1993",
+        "id_number": "0000 6174 2093",
+        "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 5695,
+        "doc_type": "aadhaar",
+        "name": "MEERA SUNDARAM PILLAI",
+        "id_number": "XXXX-XXXX-2093",
+        "dob": "1993-11-02",
+        "expiry_date": null,
+        "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 765,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "aadhaar",
+        "name": "Meera Sundaram Pillai",
+        "id_number": "XXXX-XXXX-2093",
+        "dob": "1993-11-02",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP002",
+      "document_type": "pan",
+      "filename": "pan.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "pan",
+        "name": "MEERA SUNDARAM PILLAI",
+        "dob": "02/11/1993",
+        "id_number": "SYNPP0000B",
+        "address": null,
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4535,
+        "doc_type": "pan",
+        "name": "MEERA SUNDARAM PILLAI",
+        "id_number": "SYNPP0000B",
+        "dob": "1993-11-02",
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": false,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 624,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "pan",
+        "name": "Name",
+        "id_number": null,
+        "dob": "1993-11-02",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "PAN number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": false,
+          "address": null,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP002",
+      "document_type": "passport",
+      "filename": "passport.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "passport",
+        "name": "MEERA SUNDARAM PILLAI",
+        "dob": "02/11/1993",
+        "id_number": "Z0001002",
+        "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038",
+        "issue_date": "11/02/2021",
+        "expiry_date": "10/02/2031"
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 6520,
+        "doc_type": "passport",
+        "name": "MEERA SUNDARAM PILLAI",
+        "id_number": "Z0001002",
+        "dob": "1993-11-02",
+        "expiry_date": "2031-02-10",
+        "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 1650,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "passport",
+        "name": "PILLAI",
+        "id_number": "Z0001002",
+        "dob": "1993-11-02",
+        "expiry_date": "2021-02-11",
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Passport expired on 2021-02-11 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP002",
+      "document_type": "passport",
+      "filename": "passport_front_degraded.jpg",
+      "quality": "degraded",
+      "degradation": "[{'op': 'gblur', 'sigma': 2.4}, {'op': 'lowres', 'scale': 0.45}]",
+      "expected": {
+        "document_type": "passport",
+        "name": "MEERA SUNDARAM PILLAI",
+        "dob": "02/11/1993",
+        "id_number": "Z0001002",
+        "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038",
+        "issue_date": "11/02/2021",
+        "expiry_date": "10/02/2031"
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4382,
+        "doc_type": "passport",
+        "name": "MEERA SUNDARAM PILLAI",
+        "id_number": "Z0001002",
+        "dob": "1993-11-02",
+        "expiry_date": "2031-02-10",
+        "address": null,
+        "manual_review_required": false,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 350,
+        "extraction_method": "tesseract_ocr",
+        "doc_type": "passport",
+        "name": "MEERA SUNDARAM",
+        "id_number": null,
+        "dob": "1983-11-02",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Passport number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": false,
+          "id_number": false,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP002",
+      "document_type": "voter_id",
+      "filename": "voter_id.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "voter_id",
+        "name": "Meera Sundaram Pillai",
+        "dob": "02/11/1993",
+        "id_number": "ZZZ0000102",
+        "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4712,
+        "doc_type": "voter_id",
+        "name": "MEERA SUNDARAM PILLAI",
+        "id_number": "ZZZ0000102",
+        "dob": "1993-11-02",
+        "expiry_date": null,
+        "address": "No. 221, Fictional Heights, 5th Cross, Indiranagar, Bengaluru, Karnataka - 560038",
+        "manual_review_required": false,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 863,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "voter_id",
+        "name": "Meera Sundaram Pillai",
+        "id_number": null,
+        "dob": null,
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Missing Date of Birth",
+          "Voter ID (EPIC) number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": false,
+          "id_number": false,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP002",
+      "document_type": "driving_licence",
+      "filename": "driving_licence.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "driving_licence",
+        "name": "MEERA SUNDARAM PILLAI",
+        "dob": "02/11/1993",
+        "id_number": "KA03 0000 0007720",
+        "address": "NO. 221, FICTIONAL HEIGHTS, 5TH CROSS, INDIRANAGAR, BENGALURU, KARNATAKA - 560038",
+        "issue_date": "20/01/2012",
+        "expiry_date": "19/01/2032"
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 5302,
+        "doc_type": "driving_licence",
+        "name": "MEERA SUNDARAM PILLAI",
+        "id_number": "KA03 0000 0007720",
+        "dob": "1993-11-02",
+        "expiry_date": "2032-01-19",
+        "address": "NO. 221, FICTIONAL HEIGHTS, 5TH CROSS, INDIRANAGAR, BENGALURU, KARNATAKA - 560038",
+        "manual_review_required": false,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 801,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "driving_licence",
+        "name": "MEERA SUNDARAM PILLAI",
+        "id_number": null,
+        "dob": "1993-11-02",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Driving Licence number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP002",
+      "document_type": "driving_licence",
+      "filename": "driving_licence_front_degraded.jpg",
+      "quality": "degraded",
+      "degradation": "[{'op': 'lowcontrast', 'alpha': 0.6, 'beta': 45}, {'op': 'noise', 'sigma': 14}]",
+      "expected": {
+        "document_type": "driving_licence",
+        "name": "MEERA SUNDARAM PILLAI",
+        "dob": "02/11/1993",
+        "id_number": "KA03 0000 0007720",
+        "address": "NO. 221, FICTIONAL HEIGHTS, 5TH CROSS, INDIRANAGAR, BENGALURU, KARNATAKA - 560038",
+        "issue_date": "20/01/2012",
+        "expiry_date": "19/01/2032"
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 3849,
+        "doc_type": "driving_licence",
+        "name": "MEERA SUNDARAM PILLAI",
+        "id_number": "KA03 0000 0007720",
+        "dob": "1993-11-02",
+        "expiry_date": "2032-01-19",
+        "address": "NO. 221, FICTIONAL HEIGHTS, 5TH CROSS, INDIRANAGAR, BENGALURU, KARNATAKA - 560038",
+        "manual_review_required": false,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 306,
+        "extraction_method": "tesseract_ocr",
+        "doc_type": "driving_licence",
+        "name": "MEERA SUNDARAM PILLAI",
+        "id_number": null,
+        "dob": "1993-11-02",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Driving Licence number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP003",
+      "document_type": "aadhaar",
+      "filename": "aadhaar.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "aadhaar",
+        "name": "Rohan Kishor Deshmukh",
+        "dob": "27/02/1991",
+        "id_number": "0000 7731 825",
+        "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [
+        {
+          "field": "aadhaar_number",
+          "error_type": "invalid_id_format",
+          "printed_value": "0000 7731 825",
+          "correct_value": "0000 7731 8254",
+          "description": "Aadhaar number has only 11 digits (should be 12)."
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4772,
+        "doc_type": "aadhaar",
+        "name": "ROHAN KISHOR DESHMUKH",
+        "id_number": "XXXX-XXXX-1825",
+        "dob": "1991-02-27",
+        "expiry_date": null,
+        "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 770,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "aadhaar",
+        "name": "Rohan Kishor Deshmukh",
+        "id_number": null,
+        "dob": "1991-02-27",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Aadhaar number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP003",
+      "document_type": "aadhaar",
+      "filename": "aadhaar_front_degraded.jpg",
+      "quality": "degraded",
+      "degradation": "[{'op': 'motion', 'k': 19, 'deg': 15}, {'op': 'noise', 'sigma': 5}]",
+      "expected": {
+        "document_type": "aadhaar",
+        "name": "Rohan Kishor Deshmukh",
+        "dob": "27/02/1991",
+        "id_number": "0000 7731 825",
+        "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [
+        {
+          "field": "aadhaar_number",
+          "error_type": "invalid_id_format",
+          "printed_value": "0000 7731 825",
+          "correct_value": "0000 7731 8254",
+          "description": "Aadhaar number has only 11 digits (should be 12)."
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 3624,
+        "doc_type": "aadhaar",
+        "name": "ROHAN KISHOR DESHMUKH",
+        "id_number": "XXXX-XXXX-1825",
+        "dob": "1991-02-27",
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 151,
+        "extraction_method": "tesseract_ocr",
+        "doc_type": "unknown",
+        "name": null,
+        "id_number": null,
+        "dob": null,
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Missing applicant name",
+          "Missing Date of Birth",
+          "Unclassified document type"
+        ],
+        "matches": {
+          "doc_type": false,
+          "name": false,
+          "dob": false,
+          "id_number": false,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP003",
+      "document_type": "pan",
+      "filename": "pan.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "pan",
+        "name": "ROHAN KISHOR DESHMUKH",
+        "dob": "22/07/1991",
+        "id_number": "SYNPD0000C",
+        "address": null,
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [
+        {
+          "field": "dob",
+          "error_type": "incorrect_dob",
+          "printed_value": "22/07/1991",
+          "correct_value": "1991-02-27",
+          "description": "PAN prints 22/07/1991; every other document says 27/02/1991."
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4528,
+        "doc_type": "pan",
+        "name": "ROHAN KISHOR DESHMUKH",
+        "id_number": "SYNPDOOO0C",
+        "dob": "1991-07-22",
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": false,
+        "validation_flags": [
+          "Invalid PAN format 'SYNPDOOO0C'. Must be 5 letters, 4 digits, 1 letter."
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": null,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 634,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "pan",
+        "name": "Name",
+        "id_number": null,
+        "dob": "1991-07-22",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "PAN number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": false,
+          "address": null,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP003",
+      "document_type": "passport",
+      "filename": "passport.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "passport",
+        "name": "ROHAN KISHOR DESHMUKH",
+        "dob": "27/02/1991",
+        "id_number": "Z0001003",
+        "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+        "issue_date": "03/09/2020",
+        "expiry_date": "02/09/2030"
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4877,
+        "doc_type": "passport",
+        "name": "ROHAN KISHOR DESHMUKH",
+        "id_number": "Z0001003",
+        "dob": "1991-02-27",
+        "expiry_date": "2030-09-02",
+        "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 1763,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "passport",
+        "name": "DESHMUKH",
+        "id_number": "Z0001003",
+        "dob": "1991-02-27",
+        "expiry_date": "2020-09-03",
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Passport expired on 2020-09-03 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP003",
+      "document_type": "voter_id",
+      "filename": "voter_id.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "voter_id",
+        "name": "Rohit Kishor Deshmukh",
+        "dob": "27/02/1991",
+        "id_number": "ZZZ0000103",
+        "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [
+        {
+          "field": "name",
+          "error_type": "name_mismatch",
+          "printed_value": "Rohit Kishor Deshmukh",
+          "correct_value": "Rohan Kishor Deshmukh",
+          "description": "Given name printed as 'Rohit' instead of 'Rohan' (all other documents say Rohan)."
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4434,
+        "doc_type": "voter_id",
+        "name": "ROHIT KISHOR DESHMUKH",
+        "id_number": "ZZZ0000103",
+        "dob": "1991-02-27",
+        "expiry_date": null,
+        "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+        "manual_review_required": false,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 785,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "voter_id",
+        "name": ". Rohit Kishor Deshmukh",
+        "id_number": null,
+        "dob": "1991-02-27",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Voter ID (EPIC) number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP003",
+      "document_type": "voter_id",
+      "filename": "voter_id_front_degraded.jpg",
+      "quality": "degraded",
+      "degradation": "[{'op': 'rotate', 'deg': -12}, {'op': 'saltpepper', 'amount': 0.01}]",
+      "expected": {
+        "document_type": "voter_id",
+        "name": "Rohit Kishor Deshmukh",
+        "dob": "27/02/1991",
+        "id_number": "ZZZ0000103",
+        "address": "B-304, Demo Park Apartments, Kothrud Road, Pune, Maharashtra - 411038",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [
+        {
+          "field": "name",
+          "error_type": "name_mismatch",
+          "printed_value": "Rohit Kishor Deshmukh",
+          "correct_value": "Rohan Kishor Deshmukh",
+          "description": "Given name printed as 'Rohit' instead of 'Rohan' (all other documents say Rohan)."
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4136,
+        "doc_type": "voter_id",
+        "name": "ROHIT KISHOR DESHMUKH",
+        "id_number": "ZZZ0000103",
+        "dob": "1991-02-27",
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 166,
+        "extraction_method": "tesseract_ocr",
+        "doc_type": "unknown",
+        "name": null,
+        "id_number": null,
+        "dob": null,
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Missing applicant name",
+          "Missing Date of Birth",
+          "Unclassified document type"
+        ],
+        "matches": {
+          "doc_type": false,
+          "name": false,
+          "dob": false,
+          "id_number": false,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP003",
+      "document_type": "driving_licence",
+      "filename": "driving_licence.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "driving_licence",
+        "name": "ROHAN KISHOR DESHMUKH",
+        "dob": "27/02/1991",
+        "id_number": "MH12 0000 0003051",
+        "address": "B-304, DEMO PARK APARTMENTS, KOTHRUD ROAD, PUNE, MAHARASHTRA - 411038",
+        "issue_date": "15/07/2011",
+        "expiry_date": "14/07/2031"
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4503,
+        "doc_type": "driving_licence",
+        "name": "ROHAN KISHOR DESHMUKH",
+        "id_number": "MH12 0000 0003051",
+        "dob": "1991-02-27",
+        "expiry_date": "2031-07-14",
+        "address": "B-304, DEMO PARK APARTMENTS, KOTHRUD ROAD, PUNE, MAHARASHTRA - 411038",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 856,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "driving_licence",
+        "name": "ROHAN KISHOR DESHMUKH",
+        "id_number": null,
+        "dob": "2011-07-15",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Applicant age (15 yrs) is under the legal minimum of 18 years",
+          "Driving Licence number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": false,
+          "id_number": false,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP004",
+      "document_type": "aadhaar",
+      "filename": "aadhaar.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "aadhaar",
+        "name": "Fatima Zahra Sheikh",
+        "dob": "19/05/1996",
+        "id_number": "0000 9035 1168",
+        "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 5135,
+        "doc_type": "aadhaar",
+        "name": "FATIMA ZAHRA SHEIKH",
+        "id_number": "XXXX-XXXX-1168",
+        "dob": "1996-05-19",
+        "expiry_date": null,
+        "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 776,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "aadhaar",
+        "name": "rrocccccee By",
+        "id_number": "XXXX-XXXX-1168",
+        "dob": "1996-05-19",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP004",
+      "document_type": "aadhaar",
+      "filename": "aadhaar_front_degraded.jpg",
+      "quality": "degraded",
+      "degradation": "[{'op': 'perspective', 'strength': 0.08}, {'op': 'shadow', 'strength': 0.5}, {'op': 'gblur', 'sigma': 1.2}, {'op': 'rotate', 'deg': 4}]",
+      "expected": {
+        "document_type": "aadhaar",
+        "name": "Fatima Zahra Sheikh",
+        "dob": "19/05/1996",
+        "id_number": "0000 9035 1168",
+        "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 3792,
+        "doc_type": "aadhaar",
+        "name": "FATIMA ZAHRA SHEIKH",
+        "id_number": "XXXX-XXXX-1168",
+        "dob": "1996-05-19",
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 218,
+        "extraction_method": "tesseract_ocr",
+        "doc_type": "aadhaar",
+        "name": "Fatima Zahra sheikh",
+        "id_number": null,
+        "dob": "1996-05-19",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Aadhaar number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP004",
+      "document_type": "pan",
+      "filename": "pan.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "pan",
+        "name": "FATIMA ZAHRA SHEIKH",
+        "dob": "19/05/1996",
+        "id_number": "SYNPS0000D",
+        "address": null,
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4440,
+        "doc_type": "pan",
+        "name": "FATIMA ZAHRA SHEIKH",
+        "id_number": "SYNPS0000D",
+        "dob": "1996-05-19",
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": false,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 620,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "pan",
+        "name": "Name",
+        "id_number": null,
+        "dob": "1996-05-19",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "PAN number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": false,
+          "address": null,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP004",
+      "document_type": "passport",
+      "filename": "passport.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "passport",
+        "name": "FATIMA ZAHRA SHEIKH",
+        "dob": "19/05/1996",
+        "id_number": "Z0001004",
+        "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+        "issue_date": "05/12/2022",
+        "expiry_date": "04/12/2032"
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 5956,
+        "doc_type": "passport",
+        "name": "FATIMA ZAHRA SHEIKH",
+        "id_number": "Z0001004",
+        "dob": "1996-05-19",
+        "expiry_date": "2032-12-04",
+        "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 1613,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "passport",
+        "name": "SHEIKH",
+        "id_number": "Z0001004",
+        "dob": "1996-05-19",
+        "expiry_date": "2022-12-05",
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Passport expired on 2022-12-05 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP004",
+      "document_type": "voter_id",
+      "filename": "voter_id.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "voter_id",
+        "name": "Fatima Zahra Sheikh",
+        "dob": "19/05/1996",
+        "id_number": "ZZZ0000104",
+        "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 5889,
+        "doc_type": "voter_id",
+        "name": "FATIMA ZAHRA SHEIKH",
+        "id_number": "ZZZ0000104",
+        "dob": "1996-05-19",
+        "expiry_date": null,
+        "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+        "manual_review_required": false,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 820,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "voter_id",
+        "name": "Fatima Zahra Sheikh",
+        "id_number": null,
+        "dob": "1996-05-19",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Voter ID (EPIC) number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP004",
+      "document_type": "voter_id",
+      "filename": "voter_id_front_degraded.jpg",
+      "quality": "degraded",
+      "degradation": "[{'op': 'fax'}, {'op': 'saltpepper', 'amount': 0.02}]",
+      "expected": {
+        "document_type": "voter_id",
+        "name": "Fatima Zahra Sheikh",
+        "dob": "19/05/1996",
+        "id_number": "ZZZ0000104",
+        "address": "Door 8-2-120, Mock Enclave, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4204,
+        "doc_type": "voter_id",
+        "name": "FATIMA ZAHRA SHEIKH",
+        "id_number": "ZZZ0000104",
+        "dob": "1996-05-19",
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": false,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 332,
+        "extraction_method": "tesseract_ocr",
+        "doc_type": "voter_id",
+        "name": "Abdul Rahim Sheikh",
+        "id_number": null,
+        "dob": "1996-05-19",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Voter ID (EPIC) number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP004",
+      "document_type": "driving_licence",
+      "filename": "driving_licence.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "driving_licence",
+        "name": "FATIMA ZAHRA SHEIKH",
+        "dob": "19/05/1996",
+        "id_number": "TS09 0000 0005588",
+        "address": "DOOR 8-2-120, MOCK ENCLAVE, ROAD NO. 12, BANJARA HILLS, HYDERABAD, TELANGANA - 500034",
+        "issue_date": "09/03/2016",
+        "expiry_date": "08/03/2036"
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 7444,
+        "doc_type": "driving_licence",
+        "name": "FATIMA ZAHRA SHEIKH",
+        "id_number": "TS09 0000 0005588",
+        "dob": "1996-05-19",
+        "expiry_date": "2036-03-08",
+        "address": "DOOR 8-2-120, MOCK ENCLAVE, ROAD NO. 12, BANJARA HILLS, HYDERABAD, TELANGANA - 500034",
+        "manual_review_required": false,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 820,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "driving_licence",
+        "name": "FATIMA ZAHRA SHEIKH",
+        "id_number": null,
+        "dob": "1996-05-19",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Driving Licence number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP005",
+      "document_type": "aadhaar",
+      "filename": "aadhaar.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "aadhaar",
+        "name": "Gurpreet Singh Sandhu",
+        "dob": "08/12/1985",
+        "id_number": "0000 3358 9402",
+        "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [],
+      "gemini": {
+        "success": true,
+        "latency_ms": 5715,
+        "doc_type": "aadhaar",
+        "name": "GURPREET SINGH SANDHU",
+        "id_number": "XXXX-XXXX-9402",
+        "dob": "1985-12-08",
+        "expiry_date": null,
+        "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 801,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "aadhaar",
+        "name": "Gurpreet Singh Sandhu",
+        "id_number": "XXXX-XXXX-9402",
+        "dob": "1985-12-08",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP005",
+      "document_type": "pan",
+      "filename": "pan.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "pan",
+        "name": "GURPREET SINGH SANDHU",
+        "dob": "08/12/1985",
+        "id_number": "SYNPS00000E",
+        "address": null,
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [
+        {
+          "field": "pan_number",
+          "error_type": "invalid_id_format",
+          "printed_value": "SYNPS00000E",
+          "correct_value": "SYNPS0000E",
+          "description": "PAN has 11 characters (extra digit); should be 10."
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4589,
+        "doc_type": "pan",
+        "name": "GURPREET SINGH SANDHU",
+        "id_number": "SYNPSOO000E",
+        "dob": "1985-12-08",
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": false,
+        "validation_flags": [
+          "Invalid PAN format 'SYNPSOO000E'. Must be 5 letters, 4 digits, 1 letter."
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": null,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 736,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "pan",
+        "name": "Name",
+        "id_number": null,
+        "dob": "1985-12-08",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "PAN number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": false,
+          "address": null,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP005",
+      "document_type": "passport",
+      "filename": "passport.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "passport",
+        "name": "GURPREET SINGH SANDHU",
+        "dob": "08/12/1985",
+        "id_number": "Z0001005",
+        "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010",
+        "issue_date": "10/05/2013",
+        "expiry_date": "09/05/2023"
+      },
+      "intentional_errors": [
+        {
+          "field": "date_of_expiry",
+          "error_type": "expired_document",
+          "printed_value": "09/05/2023",
+          "correct_value": null,
+          "description": "Passport expired on 09/05/2023 (before reference date 2026-11-23)."
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4805,
+        "doc_type": "passport",
+        "name": "GURPREET SINGH SANDHU",
+        "id_number": "Z0001005",
+        "dob": "1985-12-08",
+        "expiry_date": "2023-05-09",
+        "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010",
+        "manual_review_required": true,
+        "validation_valid": false,
+        "validation_flags": [
+          "Passport expired on 2023-05-09 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 1685,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "passport",
+        "name": "SANDHU",
+        "id_number": "Z0001005",
+        "dob": "1985-12-08",
+        "expiry_date": "2013-05-10",
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Passport expired on 2013-05-10 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP005",
+      "document_type": "passport",
+      "filename": "passport_front_degraded.jpg",
+      "quality": "degraded",
+      "degradation": "[{'op': 'lowres', 'scale': 0.5}, {'op': 'rotate', 'deg': -4}]",
+      "expected": {
+        "document_type": "passport",
+        "name": "GURPREET SINGH SANDHU",
+        "dob": "08/12/1985",
+        "id_number": "Z0001005",
+        "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010",
+        "issue_date": "10/05/2013",
+        "expiry_date": "09/05/2023"
+      },
+      "intentional_errors": [
+        {
+          "field": "date_of_expiry",
+          "error_type": "expired_document",
+          "printed_value": "09/05/2023",
+          "correct_value": null,
+          "description": "Passport expired on 09/05/2023 (before reference date 2026-11-23)."
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4958,
+        "doc_type": "passport",
+        "name": "GURPREET SINGH SANDHU",
+        "id_number": "Z0001005",
+        "dob": "1985-12-08",
+        "expiry_date": "2023-05-09",
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": false,
+        "validation_flags": [
+          "Passport expired on 2023-05-09 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 234,
+        "extraction_method": "tesseract_ocr",
+        "doc_type": "passport",
+        "name": "GURPREET SINGH",
+        "id_number": null,
+        "dob": "1985-12-08",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Passport number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP005",
+      "document_type": "voter_id",
+      "filename": "voter_id.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "voter_id",
+        "name": "Gurpreet Singh Sandhu",
+        "dob": null,
+        "id_number": "ZZZ0000105",
+        "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010",
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [
+        {
+          "field": "dob",
+          "error_type": "missing_field",
+          "printed_value": null,
+          "correct_value": null,
+          "description": "Date of Birth line is absent from the Voter ID."
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4504,
+        "doc_type": "voter_id",
+        "name": "GURPREET SINGH SANDHU",
+        "id_number": "ZZZ0000105",
+        "dob": null,
+        "expiry_date": null,
+        "address": "House 1127, Placeholder Colony, Sector 32, Ludhiana, Punjab - 141010",
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [
+          "Missing Date of Birth"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 783,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "voter_id",
+        "name": "Gurpreet Singh Sandhu",
+        "id_number": "ZZZ0000105",
+        "dob": null,
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": true,
+        "validation_flags": [
+          "Missing Date of Birth"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": false,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "APP005",
+      "document_type": "driving_licence",
+      "filename": "driving_licence.pdf",
+      "quality": "clean",
+      "degradation": "none",
+      "expected": {
+        "document_type": "driving_licence",
+        "name": "GURPREET SINGH SANDHU",
+        "dob": "08/12/1985",
+        "id_number": "PB10 0000 0002196",
+        "address": "FLAT 22, SAMPLE COLONY, MODEL TOWN, JALANDHAR, PUNJAB - 144003",
+        "issue_date": "02/08/2014",
+        "expiry_date": "01/08/2024"
+      },
+      "intentional_errors": [
+        {
+          "field": "valid_till",
+          "error_type": "expired_document",
+          "printed_value": "01/08/2024",
+          "correct_value": null,
+          "description": "Licence validity ended 01/08/2024 (before reference date)."
+        },
+        {
+          "field": "address",
+          "error_type": "address_mismatch",
+          "printed_value": "FLAT 22, SAMPLE COLONY, MODEL TOWN, JALANDHAR, PUNJAB - 144003",
+          "correct_value": "HOUSE 1127, PLACEHOLDER COLONY, SECTOR 32, LUDHIANA, PUNJAB - 141010",
+          "description": "DL prints a Jalandhar address; all other documents show Ludhiana."
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4436,
+        "doc_type": "driving_licence",
+        "name": "GURPREET SINGH SANDHU",
+        "id_number": "PB10 0000 0002196",
+        "dob": "1985-12-08",
+        "expiry_date": "2024-08-01",
+        "address": "FLAT 22, SAMPLE COLONY, MODEL TOWN, JALANDHAR, PUNJAB - 144003",
+        "manual_review_required": true,
+        "validation_valid": false,
+        "validation_flags": [
+          "Driving Licence expired on 2024-08-01 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 830,
+        "extraction_method": "ocr_fallback",
+        "doc_type": "driving_licence",
+        "name": "GURPREET SINGH SANDHU",
+        "id_number": null,
+        "dob": "1985-12-08",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Driving Licence number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": false,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "APP005",
+      "document_type": "driving_licence",
+      "filename": "driving_licence_front_degraded.jpg",
+      "quality": "degraded",
+      "degradation": "[{'op': 'rotate', 'deg': 90}, {'op': 'rotate', 'deg': 3}, {'op': 'noise', 'sigma': 4}]",
+      "expected": {
+        "document_type": "driving_licence",
+        "name": "GURPREET SINGH SANDHU",
+        "dob": "08/12/1985",
+        "id_number": "PB10 0000 0002196",
+        "address": "FLAT 22, SAMPLE COLONY, MODEL TOWN, JALANDHAR, PUNJAB - 144003",
+        "issue_date": "02/08/2014",
+        "expiry_date": "01/08/2024"
+      },
+      "intentional_errors": [
+        {
+          "field": "valid_till",
+          "error_type": "expired_document",
+          "printed_value": "01/08/2024",
+          "correct_value": null,
+          "description": "Licence validity ended 01/08/2024 (before reference date)."
+        },
+        {
+          "field": "address",
+          "error_type": "address_mismatch",
+          "printed_value": "FLAT 22, SAMPLE COLONY, MODEL TOWN, JALANDHAR, PUNJAB - 144003",
+          "correct_value": "HOUSE 1127, PLACEHOLDER COLONY, SECTOR 32, LUDHIANA, PUNJAB - 141010",
+          "description": "DL prints a Jalandhar address; all other documents show Ludhiana."
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4379,
+        "doc_type": "driving_licence",
+        "name": "GURPREET SINGH SANDHU",
+        "id_number": "PB10 0000 0002196",
+        "dob": "1985-12-08",
+        "expiry_date": "2024-08-01",
+        "address": "FLAT 22, SAMPLE COLONY, MODEL TOWN, JALANDHAR, PUNJAB - 144003",
+        "manual_review_required": true,
+        "validation_valid": false,
+        "validation_flags": [
+          "Driving Licence expired on 2024-08-01 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": true,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 308,
+        "extraction_method": "tesseract_ocr",
+        "doc_type": "unknown",
+        "name": null,
+        "id_number": null,
+        "dob": null,
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Missing applicant name",
+          "Missing Date of Birth",
+          "Unclassified document type"
+        ],
+        "matches": {
+          "doc_type": false,
+          "name": false,
+          "dob": false,
+          "id_number": false,
+          "address": false,
+          "dates": false
+        }
+      }
+    },
+    {
+      "applicant_id": "SCENARIO_EXPIRED_DL",
+      "document_type": "driving_licence",
+      "filename": "rohan_nair_driving_licence.pdf",
+      "quality": "scenario_edge_case",
+      "degradation": "expired_dl",
+      "expected": {
+        "document_type": "driving_licence",
+        "name": "Rohan Nair",
+        "dob": "1987-03-10",
+        "id_number": "KA-0420100012345",
+        "address": null,
+        "issue_date": null,
+        "expiry_date": "2022-04-12"
+      },
+      "intentional_errors": [
+        {
+          "error_type": "expired_dl",
+          "description": "Scenario expired_dl"
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 6173,
+        "doc_type": "driving_licence",
+        "name": "ROHAN NAIR",
+        "id_number": "KA-0420100012345",
+        "dob": "1987-03-10",
+        "expiry_date": "2022-04-12",
+        "address": null,
+        "manual_review_required": false,
+        "validation_valid": false,
+        "validation_flags": [
+          "Driving Licence expired on 2022-04-12 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 18,
+        "extraction_method": "digital_text",
+        "doc_type": "driving_licence",
+        "name": "ROHAN NAIR",
+        "id_number": "KA-0420100012345",
+        "dob": "1987-03-10",
+        "expiry_date": "2022-04-12",
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Driving Licence expired on 2022-04-12 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": true
+        }
+      }
+    },
+    {
+      "applicant_id": "SCENARIO_NAME_MISMATCH_VOTER",
+      "document_type": "voter_id",
+      "filename": "ananya_iyer_voter_id.jpg",
+      "quality": "scenario_edge_case",
+      "degradation": "name_mismatch_voter",
+      "expected": {
+        "document_type": "voter_id",
+        "name": "Ananya Subramanian",
+        "dob": "1996-12-05",
+        "id_number": "XYZ9876543",
+        "address": null,
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [
+        {
+          "error_type": "name_mismatch_voter",
+          "description": "Scenario name_mismatch_voter"
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4701,
+        "doc_type": "voter_id",
+        "name": "ANANYA SUBRAMANIAN",
+        "id_number": "XYZ9876543",
+        "dob": "1996-12-05",
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 258,
+        "extraction_method": "tesseract_ocr",
+        "doc_type": "voter_id",
+        "name": "Ananya Subramanian",
+        "id_number": "XYZ9876543",
+        "dob": "1996-12-05",
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "SCENARIO_DOB_MISMATCH_PASSPORT",
+      "document_type": "passport",
+      "filename": "kabir_malhotra_passport.pdf",
+      "quality": "scenario_edge_case",
+      "degradation": "dob_mismatch_passport",
+      "expected": {
+        "document_type": "passport",
+        "name": "Kabir Malhotra",
+        "dob": "1989-11-28",
+        "id_number": "M2345678",
+        "address": null,
+        "issue_date": null,
+        "expiry_date": "2030-05-20"
+      },
+      "intentional_errors": [
+        {
+          "error_type": "dob_mismatch_passport",
+          "description": "Scenario dob_mismatch_passport"
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 6058,
+        "doc_type": "passport",
+        "name": "KABIR MALHOTRA",
+        "id_number": "M2345678",
+        "dob": "1989-11-28",
+        "expiry_date": "2030-05-20",
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 18,
+        "extraction_method": "digital_text",
+        "doc_type": "passport",
+        "name": "KABIR MALHOTRA",
+        "id_number": "M2345678",
+        "dob": "1989-11-28",
+        "expiry_date": "2030-05-20",
+        "address": null,
+        "validation_valid": true,
+        "validation_flags": [],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": true
+        }
+      }
+    },
+    {
+      "applicant_id": "SCENARIO_INCOMPLETE_PAN_MISSING_FIELDS",
+      "document_type": "pan",
+      "filename": "meera_krishnan_pan_incomplete.pdf",
+      "quality": "scenario_edge_case",
+      "degradation": "incomplete_pan_missing_fields",
+      "expected": {
+        "document_type": "pan",
+        "name": "Meera Krishnan",
+        "dob": null,
+        "id_number": null,
+        "address": null,
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [
+        {
+          "error_type": "incomplete_pan_missing_fields",
+          "description": "Scenario incomplete_pan_missing_fields"
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4104,
+        "doc_type": "pan",
+        "name": "MEERA KRISHNAN",
+        "id_number": null,
+        "dob": null,
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": false,
+        "validation_flags": [
+          "Missing Date of Birth",
+          "PAN number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 23,
+        "extraction_method": "digital_text",
+        "doc_type": "pan",
+        "name": "MEERA KRISHNAN",
+        "id_number": null,
+        "dob": null,
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Missing Date of Birth",
+          "PAN number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": null
+        }
+      }
+    },
+    {
+      "applicant_id": "SCENARIO_EXPIRED_PASSPORT",
+      "document_type": "passport",
+      "filename": "dev_patel_passport_expired.pdf",
+      "quality": "scenario_edge_case",
+      "degradation": "expired_passport",
+      "expected": {
+        "document_type": "passport",
+        "name": "Dev Patel",
+        "dob": "1990-09-18",
+        "id_number": "L3456789",
+        "address": null,
+        "issue_date": null,
+        "expiry_date": "2020-01-10"
+      },
+      "intentional_errors": [
+        {
+          "error_type": "expired_passport",
+          "description": "Scenario expired_passport"
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 4256,
+        "doc_type": "passport",
+        "name": "DEV PATEL",
+        "id_number": "L3456789",
+        "dob": "1990-09-18",
+        "expiry_date": "2020-01-10",
+        "address": null,
+        "manual_review_required": false,
+        "validation_valid": false,
+        "validation_flags": [
+          "Passport expired on 2020-01-10 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": true
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 23,
+        "extraction_method": "digital_text",
+        "doc_type": "passport",
+        "name": "DEV PATEL",
+        "id_number": "L3456789",
+        "dob": "1990-09-18",
+        "expiry_date": "2020-01-10",
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Passport expired on 2020-01-10 (Past validity date)"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": true,
+          "dob": true,
+          "id_number": true,
+          "address": null,
+          "dates": true
+        }
+      }
+    },
+    {
+      "applicant_id": "SCENARIO_LOW_QUALITY_SCAN_PAN",
+      "document_type": "pan",
+      "filename": "ishita_rao_pan_low_quality.jpg",
+      "quality": "scenario_edge_case",
+      "degradation": "low_quality_scan_pan",
+      "expected": {
+        "document_type": "pan",
+        "name": "Ishita Rao",
+        "dob": "1995-02-11",
+        "id_number": "ABCPR9900L",
+        "address": null,
+        "issue_date": null,
+        "expiry_date": null
+      },
+      "intentional_errors": [
+        {
+          "error_type": "low_quality_scan_pan",
+          "description": "Scenario low_quality_scan_pan"
+        }
+      ],
+      "gemini": {
+        "success": true,
+        "latency_ms": 5800,
+        "doc_type": "pan",
+        "name": null,
+        "id_number": null,
+        "dob": null,
+        "expiry_date": null,
+        "address": null,
+        "manual_review_required": true,
+        "validation_valid": false,
+        "validation_flags": [
+          "Missing applicant name",
+          "Missing Date of Birth",
+          "PAN number missing from document"
+        ],
+        "matches": {
+          "doc_type": true,
+          "name": false,
+          "dob": false,
+          "id_number": false,
+          "address": null,
+          "dates": null
+        }
+      },
+      "local_ocr": {
+        "success": true,
+        "latency_ms": 162,
+        "extraction_method": "tesseract_ocr",
+        "doc_type": "unknown",
+        "name": null,
+        "id_number": null,
+        "dob": null,
+        "expiry_date": null,
+        "address": null,
+        "validation_valid": false,
+        "validation_flags": [
+          "Missing applicant name",
+          "Missing Date of Birth",
+          "Unclassified document type"
+        ],
+        "matches": {
+          "doc_type": false,
+          "name": false,
+          "dob": false,
+          "id_number": false,
+          "address": null,
+          "dates": null
+        }
+      }
+    }
+  ]
+}

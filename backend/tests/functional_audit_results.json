@@ -1,0 +1,282 @@
+[
+  {
+    "feature": "System Health Check",
+    "endpoint": "GET /api/health",
+    "status": "PASS",
+    "actual_result": "HTTP 200 returned: {\n  \"message\": \"Document Verification API is running\",\n  \"success\": true\n}\n",
+    "db_persistence": "N/A",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Welcome Page - Reset Demo Dataset",
+    "endpoint": "POST /api/demo/reset",
+    "status": "PASS",
+    "actual_result": "HTTP 200: Demonstration dataset has been reset to its pristine benchmark state.",
+    "db_persistence": "Verified: Resets and preserves demo applicants in SQLite",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Dashboard Stats (All Database)",
+    "endpoint": "GET /api/dashboard/stats?dataset=all",
+    "status": "PASS",
+    "actual_result": "Total: 127 docs, Approved: 27, Pending: 70, Issues: 30, Apps: 25",
+    "db_persistence": "Matches SELECT COUNT(*) queries from documents & applicants",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Dashboard Scope Filter (Synthetic KYC)",
+    "endpoint": "GET /api/dashboard/stats?dataset=synthetic",
+    "status": "PASS",
+    "actual_result": "Synthetic scope: 61 docs, 10 applicants",
+    "db_persistence": "Filters specifically on applicant_id LIKE 'APPL-SYN-%'",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Upload Validation - Empty File Rejection",
+    "endpoint": "POST /api/documents/upload",
+    "status": "PASS",
+    "actual_result": "HTTP 400: Document upload failed validation.",
+    "db_persistence": "Rejected: 0 bytes files not committed to SQLite",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Upload Validation - Unsupported Extension Rejection",
+    "endpoint": "POST /api/documents/upload",
+    "status": "PASS",
+    "actual_result": "HTTP 400: Document upload failed validation.",
+    "db_persistence": "Rejected: Executable files rejected safely before storage",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Upload Workflow - Multi-document 5 Category Ingestion",
+    "endpoint": "POST /api/documents/upload",
+    "status": "PASS",
+    "actual_result": "Uploaded 5 files for new applicant 'APP-AUDIT-1795496949'",
+    "db_persistence": "5 rows inserted into documents table under applicant_id=APP-AUDIT-1795496949",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Classification & Extraction: aarav_mehta_pan.pdf",
+    "endpoint": "POST /api/documents/aa8244c9-ab93-4220-b51e-d5b44afa2a4b/process",
+    "status": "PASS",
+    "actual_result": "Classified as 'pan', extraction method: 'ai_gemini'",
+    "db_persistence": "Extracted fields JSON and validation JSON persisted to documents table",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Aadhaar Redaction / Digit Masking",
+    "endpoint": "POST /api/documents/0637442e-7b38-4aff-9462-a47b933bbc17/process",
+    "status": "PASS",
+    "actual_result": "Extracted Aadhaar ID formatted safely with masking: 'XXXX-X...'",
+    "db_persistence": "Masked ID safely persisted to SQLite",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Classification & Extraction: aarav_mehta_aadhaar.pdf",
+    "endpoint": "POST /api/documents/0637442e-7b38-4aff-9462-a47b933bbc17/process",
+    "status": "PASS",
+    "actual_result": "Classified as 'aadhaar', extraction method: 'ai_gemini'",
+    "db_persistence": "Extracted fields JSON and validation JSON persisted to documents table",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Classification & Extraction: priya_sharma_passport.pdf",
+    "endpoint": "POST /api/documents/4761e6b6-1457-4a24-93ee-7df816d2dd8e/process",
+    "status": "PASS",
+    "actual_result": "Classified as 'passport', extraction method: 'ai_gemini'",
+    "db_persistence": "Extracted fields JSON and validation JSON persisted to documents table",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Driving Licence Expiry Detection",
+    "endpoint": "POST /api/documents/7d34211f-6cba-4418-8d2c-bd9f2dfb2f3a/process",
+    "status": "PASS",
+    "actual_result": "Validation correctly flagged expired driving licence: ['Driving Licence expired on 2022-04-12 (Past validity date)']",
+    "db_persistence": "Validation failure & status='invalid' saved in SQLite",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Classification & Extraction: rohan_nair_driving_licence.pdf",
+    "endpoint": "POST /api/documents/7d34211f-6cba-4418-8d2c-bd9f2dfb2f3a/process",
+    "status": "PASS",
+    "actual_result": "Classified as 'driving_licence', extraction method: 'ai_gemini'",
+    "db_persistence": "Extracted fields JSON and validation JSON persisted to documents table",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Classification & Extraction: ananya_iyer_voter_id.jpg",
+    "endpoint": "POST /api/documents/51a708cc-56a2-4813-89f8-9144c79fd31d/process",
+    "status": "PASS",
+    "actual_result": "Classified as 'voter_id', extraction method: 'ai_gemini'",
+    "db_persistence": "Extracted fields JSON and validation JSON persisted to documents table",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Cross-Document Discrepancy Detection & Expiry Gate",
+    "endpoint": "GET /api/applicants/APP-AUDIT-1795496949",
+    "status": "PASS",
+    "actual_result": "Overall verdict correctly evaluated to 'DISCREPANCY_FLAGGED' (Score: 35.7%)",
+    "db_persistence": "Applicant record updated to status='requires_attention' in SQLite",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Verification Queue Filter: status='all'",
+    "endpoint": "GET /api/documents",
+    "status": "PASS",
+    "actual_result": "Retrieved 50 documents (total matching: 132)",
+    "db_persistence": "Matches SQLite review_status index",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Verification Queue Filter: status='pending'",
+    "endpoint": "GET /api/documents?status=pending",
+    "status": "PASS",
+    "actual_result": "Retrieved 50 documents (total matching: 74)",
+    "db_persistence": "Matches SQLite review_status index",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Verification Queue Filter: status='manual_review'",
+    "endpoint": "GET /api/documents?status=manual_review",
+    "status": "PASS",
+    "actual_result": "Retrieved 29 documents (total matching: 29)",
+    "db_persistence": "Matches SQLite review_status index",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Verification Queue Filter: status='resubmission_requested'",
+    "endpoint": "GET /api/documents?status=resubmission_requested",
+    "status": "PASS",
+    "actual_result": "Retrieved 0 documents (total matching: 0)",
+    "db_persistence": "Matches SQLite review_status index",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Verification Queue Filter: status='approved'",
+    "endpoint": "GET /api/documents?status=approved",
+    "status": "PASS",
+    "actual_result": "Retrieved 27 documents (total matching: 27)",
+    "db_persistence": "Matches SQLite review_status index",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Verification Queue Filter: status='rejected'",
+    "endpoint": "GET /api/documents?status=rejected",
+    "status": "PASS",
+    "actual_result": "Retrieved 2 documents (total matching: 2)",
+    "db_persistence": "Matches SQLite review_status index",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Global & Queue Search (Query: 'Aarav')",
+    "endpoint": "GET /api/search?q=Aarav",
+    "status": "PASS",
+    "actual_result": "Matched 1 applicants and 12 documents",
+    "db_persistence": "Searches SQLite applicants and documents",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Verification Queue - Save Edits",
+    "endpoint": "POST /api/documents/aa8244c9-ab93-4220-b51e-d5b44afa2a4b/review",
+    "status": "PASS",
+    "actual_result": "Successfully saved edited fields and officer audit notes",
+    "db_persistence": "Verified in SQLite: extracted_fields JSON updated, review_status='pending'",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Verification Queue - Request Resubmission",
+    "endpoint": "POST /api/documents/aa8244c9-ab93-4220-b51e-d5b44afa2a4b/review",
+    "status": "PASS",
+    "actual_result": "Document status transitioned to 'resubmission_requested'",
+    "db_persistence": "review_status updated in SQLite documents table",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Verification Queue - Reject Document",
+    "endpoint": "POST /api/documents/aa8244c9-ab93-4220-b51e-d5b44afa2a4b/review",
+    "status": "PASS",
+    "actual_result": "Document status transitioned to 'rejected'",
+    "db_persistence": "review_status updated to 'rejected' in SQLite",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Verification Queue - Mark Verified (Approved)",
+    "endpoint": "POST /api/documents/aa8244c9-ab93-4220-b51e-d5b44afa2a4b/review",
+    "status": "PASS",
+    "actual_result": "Document status transitioned to 'approved'",
+    "db_persistence": "review_status updated to 'approved' in SQLite",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Applicants Directory Listing",
+    "endpoint": "GET /api/applicants",
+    "status": "PASS",
+    "actual_result": "Retrieved 26 applicant dossiers",
+    "db_persistence": "Reads applicants table with document_count join",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Inspect Applicant Profile: #APP-AUDIT-1795496949",
+    "endpoint": "GET /api/applicants/APP-AUDIT-1795496949",
+    "status": "PASS",
+    "actual_result": "Profile loaded with 5 documents and cross-check matrix",
+    "db_persistence": "Verified: Cross comparison recomputed deterministically",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Update Applicant Profile & Risk Assessment",
+    "endpoint": "PUT /api/applicants/APP-AUDIT-1795496949",
+    "status": "PASS",
+    "actual_result": "Risk level set to 'medium', notes updated",
+    "db_persistence": "Verified: SQLite applicants table persisted new notes and risk_level",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Reports Compliance Summary",
+    "endpoint": "GET /api/reports/summary",
+    "status": "PASS",
+    "actual_result": "Compiled audit for 26 applicants, 132 documents",
+    "db_persistence": "Matches aggregated database counts",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Reports Export - CSV Format",
+    "endpoint": "GET /api/reports/download?format=csv",
+    "status": "PASS",
+    "actual_result": "HTTP 200, Content-Type: text/csv; charset=utf-8, Generated: 10242 bytes",
+    "db_persistence": "Streaming CSV export derived from live SQLite records",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Reports Export - JSON Format",
+    "endpoint": "GET /api/reports/download?format=json",
+    "status": "PASS",
+    "actual_result": "HTTP 200, Content-Type: application/json, Generated: 17981 bytes",
+    "db_persistence": "Streaming JSON export derived from live SQLite records",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Database State Persistence in SQLite",
+    "endpoint": "Direct SQLite verification (backend/database/veridoc.db)",
+    "status": "PASS",
+    "actual_result": "Target doc #aa8244c9 review_status='approved', reviewed_by='Arjun Mehta (Lead Auditor)'",
+    "db_persistence": "Verified: All commits are ACID-compliant and persistent in veridoc.db",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Gemini AI Extraction Engine Availability",
+    "endpoint": "GET /api/documents/ai-status",
+    "status": "PASS",
+    "actual_result": "Provider: gemini, Configured: True, Model: gemini-3.5-flash-lite",
+    "db_persistence": "Read from server config environment safely without exposing secret keys",
+    "bug_found": "None"
+  },
+  {
+    "feature": "Tesseract Local OCR Fallback Engine",
+    "endpoint": "GET /api/documents/ocr-status",
+    "status": "PASS",
+    "actual_result": "Tesseract Operational: True, PDF OCR Fallback: None",
+    "db_persistence": "Standby fallback operational if AI quota or network fails",
+    "bug_found": "None"
+  }
+]
