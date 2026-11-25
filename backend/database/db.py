@@ -7,6 +7,211 @@ from typing import Optional, Dict, Any, List
 from flask import current_app
 from rapidfuzz import fuzz
 
+try:
+    import psycopg2
+    from psycopg2.extras import DictCursor, RealDictCursor
+    PSYCOPG2_AVAILABLE = True
+except ImportError:
+    psycopg2 = None
+    DictCursor = None
+    RealDictCursor = None
+    PSYCOPG2_AVAILABLE = False
+
+
+class PostgresRow(dict):
+    """
+    Row wrapper that supports both dict key lookup (row['name'])
+    and integer indexing (row[0]) exactly matching sqlite3.Row.
+    """
+    def __init__(self, raw_row, description):
+        self._raw_row = raw_row
+        col_names = [d[0] for d in description] if description else []
+        super().__init__(zip(col_names, raw_row))
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self._raw_row[item]
+        return super().__getitem__(item)
+
+
+class PostgresCursorWrapper:
+    """
+    Transparent psycopg2 cursor wrapper providing:
+    1. Automatic translation of '?' positional placeholders to '%s'.
+    2. Automatic translation of ':key' named placeholders to '%(key)s'.
+    3. Seamless compatibility with SQLite 'INSERT OR IGNORE' via 'ON CONFLICT (id) DO NOTHING'.
+    4. lastrowid property emulation for serial tables.
+    5. Dict-compatible row return types identical to sqlite3.Row (both row['key'] and row[0]).
+    """
+    def __init__(self, raw_cursor):
+        self._cur = raw_cursor
+        self._lastrowid = None
+
+    def execute(self, sql: str, params: Any = None):
+        clean_sql = sql
+        # Adapt SQLite 'INSERT OR IGNORE'
+        if "INSERT OR IGNORE INTO applicants" in clean_sql:
+            clean_sql = clean_sql.replace("INSERT OR IGNORE INTO applicants", "INSERT INTO applicants")
+            if "ON CONFLICT" not in clean_sql:
+                clean_sql = clean_sql.rstrip().rstrip(";") + " ON CONFLICT (id) DO NOTHING"
+
+        # Auto-append RETURNING id for lastrowid emulation on serial tables
+        is_insert = clean_sql.strip().upper().startswith("INSERT INTO")
+        has_returning = "RETURNING" in clean_sql.upper()
+        if is_insert and not has_returning and ("ai_usage_logs" in clean_sql or "audit_reviews" in clean_sql):
+            clean_sql = clean_sql.rstrip().rstrip(";") + " RETURNING id"
+            has_returning = True
+
+        if params is not None:
+            if isinstance(params, (tuple, list)):
+                # Escape literal '%' to '%%' before converting '?' to '%s'
+                clean_sql = clean_sql.replace("%", "%%").replace("?", "%s")
+                self._cur.execute(clean_sql, params)
+            elif isinstance(params, dict):
+                clean_sql = clean_sql.replace("%", "%%")
+                clean_sql = re.sub(r':([a-zA-Z0-9_]+)', r'%(\1)s', clean_sql)
+                self._cur.execute(clean_sql, params)
+            else:
+                self._cur.execute(clean_sql, params)
+        else:
+            self._cur.execute(clean_sql)
+
+        if is_insert and has_returning:
+            try:
+                row = self._cur.fetchone()
+                if row:
+                    self._lastrowid = row[0] if isinstance(row, (tuple, list)) else row.get("id")
+            except Exception:
+                self._lastrowid = None
+
+        return self
+
+    def executemany(self, sql: str, seq_of_parameters: Any):
+        clean_sql = sql
+        if "INSERT OR IGNORE INTO applicants" in clean_sql:
+            clean_sql = clean_sql.replace("INSERT OR IGNORE INTO applicants", "INSERT INTO applicants")
+            if "ON CONFLICT" not in clean_sql:
+                clean_sql = clean_sql.rstrip().rstrip(";") + " ON CONFLICT (id) DO NOTHING"
+        clean_sql = clean_sql.replace("?", "%s")
+        return self._cur.executemany(clean_sql, seq_of_parameters)
+
+    @property
+    def lastrowid(self):
+        return self._lastrowid
+
+    @property
+    def rowcount(self):
+        return self._cur.rowcount
+
+    @property
+    def description(self):
+        return self._cur.description
+
+    def fetchone(self):
+        row = self._cur.fetchone()
+        if row is None:
+            return None
+        return PostgresRow(row, self._cur.description)
+
+    def fetchall(self):
+        rows = self._cur.fetchall()
+        desc = self._cur.description
+        return [PostgresRow(r, desc) for r in rows]
+
+    def close(self):
+        self._cur.close()
+
+    def __iter__(self):
+        desc = self._cur.description
+        for r in self._cur:
+            yield PostgresRow(r, desc)
+
+
+class PostgresConnectionWrapper:
+    """Postgres connection wrapper providing sqlite3.Connection compatible interface."""
+    def __init__(self, raw_conn):
+        self._conn = raw_conn
+
+    def cursor(self):
+        return PostgresCursorWrapper(self._conn.cursor())
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        self._conn.close()
+
+    def execute(self, sql: str, params: Any = None):
+        cur = self.cursor()
+        return cur.execute(sql, params)
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        self._conn.close()
+
+    def execute(self, sql: str, params: Any = None):
+        cur = self.cursor()
+        return cur.execute(sql, params)
+
+
+def is_postgres_configured() -> bool:
+    """Return True if PostgreSQL is enabled and configured via environment or Flask config."""
+    try:
+        if current_app:
+            if current_app.config.get("TESTING"):
+                if current_app.config.get("DATABASE_TYPE") != "postgres":
+                    return False
+            if "DATABASE_TYPE" in current_app.config:
+                cfg_type = str(current_app.config.get("DATABASE_TYPE", "")).lower().strip()
+                if cfg_type in ("postgres", "postgresql"):
+                    return True
+                elif cfg_type == "sqlite":
+                    return False
+    except RuntimeError:
+        pass
+    
+    db_type = os.getenv("DATABASE_TYPE")
+    if not db_type:
+        from dotenv import load_dotenv
+        root_env = Path(__file__).resolve().parent.parent.parent / ".env"
+        if root_env.exists():
+            load_dotenv(root_env)
+        db_type = os.getenv("DATABASE_TYPE", "")
+
+    db_type = str(db_type or "").lower().strip()
+    db_url = os.getenv("DATABASE_URL", "").strip()
+    if db_type in ("postgres", "postgresql") or db_url.startswith("postgres"):
+        return True
+    return False
+
+
+def get_postgres_connection() -> PostgresConnectionWrapper:
+    """Establish and return a wrapped PostgreSQL connection."""
+    if not PSYCOPG2_AVAILABLE:
+        raise RuntimeError("psycopg2-binary is required for PostgreSQL. Run: pip install psycopg2-binary")
+    
+    url = os.getenv("DATABASE_URL")
+    if url:
+        raw_conn = psycopg2.connect(url)
+    else:
+        raw_conn = psycopg2.connect(
+            host=os.getenv("POSTGRES_HOST", "localhost"),
+            port=int(os.getenv("POSTGRES_PORT", 5432)),
+            dbname=os.getenv("POSTGRES_DB", "veridoc_db"),
+            user=os.getenv("POSTGRES_USER", "postgres"),
+            password=os.getenv("POSTGRES_PASSWORD", ""),
+            sslmode=os.getenv("POSTGRES_SSLMODE", "prefer")
+        )
+    return PostgresConnectionWrapper(raw_conn)
+
 
 def is_placeholder_name(name: Optional[str]) -> bool:
     """Return True if name is empty, null, or a generic placeholder."""
@@ -41,11 +246,41 @@ def _resolve_db_path(db_path: Optional[str] = None) -> str:
     return str(default_path)
 
 
-def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
+def get_db_connection(db_path: Optional[str] = None):
     """
-    Establish an SQLite database connection.
-    Configures sqlite3.Row for dict-like column access and enables foreign keys.
+    Establish a database connection.
+    Connects to PostgreSQL if configured (DATABASE_TYPE=postgres or DATABASE_URL)
+    unless an explicit custom SQLite file path or :memory: is provided for isolated unit tests.
     """
+    # 1. Isolated pytest temporary database fixture override
+    if db_path is not None:
+        if db_path == ":memory:" or (db_path.endswith(".db") and os.path.basename(db_path) != "veridoc.db"):
+            if db_path != ":memory:":
+                os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
+            conn = sqlite3.connect(db_path)
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA foreign_keys = ON;")
+            return conn
+
+    try:
+        if current_app:
+            if current_app.config.get("TESTING") or current_app.config.get("DATABASE_TYPE") == "sqlite":
+                test_db = current_app.config.get("DATABASE_PATH")
+                if test_db and (os.path.basename(test_db) != "veridoc.db" or current_app.config.get("TESTING")):
+                    if test_db != ":memory:":
+                        os.makedirs(os.path.dirname(os.path.abspath(test_db)), exist_ok=True)
+                    conn = sqlite3.connect(test_db)
+                    conn.row_factory = sqlite3.Row
+                    conn.execute("PRAGMA foreign_keys = ON;")
+                    return conn
+    except RuntimeError:
+        pass
+
+    # 2. Production & Application Database: PostgreSQL when configured
+    if is_postgres_configured():
+        return get_postgres_connection()
+
+    # 3. Default fallback: SQLite
     target_path = _resolve_db_path(db_path)
     if target_path != ":memory:":
         os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
@@ -58,9 +293,31 @@ def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
 
 def init_db(db_path: Optional[str] = None) -> None:
     """
-    Initialize SQLite schema and perform safe non-destructive migrations.
+    Initialize schema and perform safe non-destructive migrations.
+    Operates on PostgreSQL when configured; otherwise initializes SQLite.
     Safe to call multiple times (idempotent).
     """
+    # Handle isolated unit test sqlite databases
+    is_custom_test_db = False
+    if db_path is not None and (os.path.basename(db_path) != "veridoc.db" or db_path == ":memory:"):
+        is_custom_test_db = True
+    try:
+        if current_app and (current_app.config.get("TESTING") or current_app.config.get("DATABASE_TYPE") == "sqlite"):
+            t_db = current_app.config.get("DATABASE_PATH")
+            if t_db and (os.path.basename(t_db) != "veridoc.db" or current_app.config.get("TESTING")):
+                is_custom_test_db = True
+    except RuntimeError:
+        pass
+
+    if not is_custom_test_db and is_postgres_configured():
+        from backend.database.migrate_to_postgres import POSTGRES_DDL
+        conn = get_postgres_connection()
+        cur = conn.cursor()
+        cur.execute(POSTGRES_DDL)
+        conn.commit()
+        conn.close()
+        return
+
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
 
@@ -114,7 +371,40 @@ def init_db(db_path: Optional[str] = None) -> None:
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_review ON documents(review_status);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_doc ON audit_reviews(document_id);")
 
-    # 5. Safe Schema Migrations for documents
+    # 5. AI API Usage & Cost Tracking Table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ai_usage_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            document_id TEXT,
+            applicant_id TEXT,
+            provider TEXT NOT NULL,
+            model TEXT NOT NULL,
+            prompt_tokens INTEGER,
+            candidate_tokens INTEGER,
+            total_tokens INTEGER,
+            latency_ms INTEGER,
+            status TEXT NOT NULL,
+            estimated_cost REAL,
+            error_message TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (document_id) REFERENCES documents (id) ON DELETE CASCADE,
+            FOREIGN KEY (applicant_id) REFERENCES applicants (id) ON DELETE SET NULL
+        );
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_ai_usage_doc ON ai_usage_logs(document_id);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_ai_usage_applicant ON ai_usage_logs(applicant_id);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_ai_usage_status ON ai_usage_logs(status);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_ai_usage_provider ON ai_usage_logs(provider);")
+
+    # Safe Schema Migrations for ai_usage_logs
+    cursor.execute("PRAGMA table_info(ai_usage_logs);")
+    usage_cols = {row["name"] for row in cursor.fetchall()}
+    if "request_type" not in usage_cols:
+        cursor.execute("ALTER TABLE ai_usage_logs ADD COLUMN request_type TEXT DEFAULT 'multimodal_extraction';")
+    if "channel" not in usage_cols:
+        cursor.execute("ALTER TABLE ai_usage_logs ADD COLUMN channel TEXT DEFAULT 'sdk';")
+
+    # 6. Safe Schema Migrations for documents
     cursor.execute("PRAGMA table_info(documents);")
     doc_cols = {row["name"] for row in cursor.fetchall()}
     
@@ -133,7 +423,7 @@ def init_db(db_path: Optional[str] = None) -> None:
         if col_name not in doc_cols:
             cursor.execute(f"ALTER TABLE documents ADD COLUMN {col_name} {col_type};")
 
-    # 6. Safe Schema Migrations for applicants
+    # 7. Safe Schema Migrations for applicants
     cursor.execute("PRAGMA table_info(applicants);")
     app_cols = {row["name"] for row in cursor.fetchall()}
     new_app_columns = {
@@ -146,6 +436,42 @@ def init_db(db_path: Optional[str] = None) -> None:
     for col_name, col_type in new_app_columns.items():
         if col_name not in app_cols:
             cursor.execute(f"ALTER TABLE applicants ADD COLUMN {col_name} {col_type};")
+
+    # 8. Safe backfill for legacy documents processed via Gemini before usage tracking table existed
+    cursor.execute("SELECT COUNT(*) as count FROM ai_usage_logs;")
+    if cursor.fetchone()["count"] == 0:
+        cursor.execute("""
+            SELECT id, applicant_id, extracted_fields, upload_timestamp 
+            FROM documents 
+            WHERE extracted_fields LIKE '%"provider": "gemini"%'
+               OR extracted_fields LIKE '%"extraction_method": "ai_gemini"%'
+        """)
+        for d in cursor.fetchall():
+            fields = {}
+            try:
+                fields = json.loads(d["extracted_fields"]) if d["extracted_fields"] else {}
+            except Exception:
+                pass
+            p_meta = fields.get("provider_metadata", {})
+            cursor.execute("""
+                INSERT INTO ai_usage_logs (
+                    document_id, applicant_id, provider, model,
+                    prompt_tokens, candidate_tokens, total_tokens,
+                    latency_ms, status, estimated_cost, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                d["id"],
+                d["applicant_id"],
+                p_meta.get("provider", "gemini"),
+                p_meta.get("model", "gemini-3.5-flash-lite"),
+                p_meta.get("prompt_tokens"),
+                p_meta.get("candidate_tokens"),
+                p_meta.get("total_tokens"),
+                p_meta.get("latency_ms"),
+                "success",
+                p_meta.get("estimated_cost"),
+                d["upload_timestamp"] or "2026-11-25 00:00:00"
+            ))
 
     conn.commit()
     conn.close()
@@ -1435,4 +1761,190 @@ def search_all(query: str, limit: int = 10, db_path: Optional[str] = None) -> Di
     return {
         "applicants": applicants,
         "documents": documents
+    }
+
+
+def insert_ai_usage_log(entry: Dict[str, Any], db_path: Optional[str] = None) -> int:
+    """
+    Record an AI API request execution and token usage log linked to a document.
+    """
+    conn = get_db_connection(db_path)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO ai_usage_logs (
+            document_id, applicant_id, provider, model,
+            prompt_tokens, candidate_tokens, total_tokens,
+            latency_ms, status, estimated_cost, error_message,
+            request_type, channel
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        entry.get("document_id"),
+        entry.get("applicant_id"),
+        entry.get("provider", "gemini"),
+        entry.get("model", "gemini-3.5-flash-lite"),
+        entry.get("prompt_tokens"),
+        entry.get("candidate_tokens"),
+        entry.get("total_tokens"),
+        entry.get("latency_ms"),
+        entry.get("status", "success"),
+        entry.get("estimated_cost"),
+        entry.get("error_message"),
+        entry.get("request_type", "multimodal_extraction"),
+        entry.get("channel", "sdk")
+    ))
+    row_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return row_id
+
+
+def get_ai_usage_summary(db_path: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Retrieve aggregated AI usage and cost metrics for reporting and dashboard visibility.
+    Excludes local fallback processing.
+    """
+    conn = get_db_connection(db_path)
+    cursor = conn.cursor()
+
+    # 1. Document processing breakdown (Requirement 8 metrics 1-3)
+    cursor.execute("""
+        SELECT 
+            COUNT(*) as total_docs,
+            SUM(CASE WHEN processing_status = 'completed' THEN 1 ELSE 0 END) as total_processed,
+            SUM(CASE WHEN (extracted_fields LIKE '%"provider": "gemini"%' OR extracted_fields LIKE '%"extraction_method": "ai_gemini"%') THEN 1 ELSE 0 END) as gemini_docs,
+            SUM(CASE WHEN (extracted_fields NOT LIKE '%"provider": "gemini"%' AND extracted_fields NOT LIKE '%"extraction_method": "ai_gemini"%' OR extracted_fields IS NULL) AND processing_status = 'completed' THEN 1 ELSE 0 END) as local_docs
+        FROM documents;
+    """)
+    doc_row = cursor.fetchone()
+    total_processed = doc_row["total_processed"] if doc_row and doc_row["total_processed"] is not None else 0
+    gemini_docs = doc_row["gemini_docs"] if doc_row and doc_row["gemini_docs"] is not None else 0
+    local_docs = doc_row["local_docs"] if doc_row and doc_row["local_docs"] is not None else 0
+
+    # 2. AI usage logs aggregation for Gemini (Requirement 8 metrics 4-11)
+    cursor.execute("""
+        SELECT 
+            COUNT(*) as total_calls,
+            COUNT(DISTINCT document_id) as gemini_documents_with_logs,
+            SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful_calls,
+            SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as failed_calls,
+            SUM(prompt_tokens) as total_prompt_tokens,
+            SUM(candidate_tokens) as total_candidate_tokens,
+            SUM(total_tokens) as total_tokens,
+            SUM(estimated_cost) as total_cost,
+            AVG(latency_ms) as avg_latency_ms
+        FROM ai_usage_logs
+        WHERE provider = 'gemini'
+    """)
+    row = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT 
+            u.id, u.document_id, u.applicant_id, u.provider, u.model,
+            u.prompt_tokens, u.candidate_tokens, u.total_tokens,
+            u.latency_ms, u.status, u.estimated_cost, u.error_message, u.created_at,
+            u.channel, u.request_type,
+            d.original_filename, d.document_type
+        FROM ai_usage_logs u
+        LEFT JOIN documents d ON u.document_id = d.id
+        WHERE u.provider = 'gemini'
+        ORDER BY u.id DESC
+        LIMIT 25
+    """)
+    recent_logs = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+
+    total_calls = row["total_calls"] if row and row["total_calls"] is not None else 0
+    prompt_tokens = row["total_prompt_tokens"] if row and row["total_prompt_tokens"] is not None else 0
+    cand_tokens = row["total_candidate_tokens"] if row and row["total_candidate_tokens"] is not None else 0
+    tot_tokens = row["total_tokens"] if row and row["total_tokens"] is not None else 0
+    cost_val = row["total_cost"]
+
+    from backend.config import Config
+    price_in = Config.GEMINI_PRICE_PER_M_INPUT_TOKENS
+    price_out = Config.GEMINI_PRICE_PER_M_OUTPUT_TOKENS
+    model = Config.GEMINI_MODEL
+
+    return {
+        "provider": "gemini",
+        "model": model,
+        "pricing": {
+            "input_per_m": price_in,
+            "output_per_m": price_out,
+            "currency": "USD",
+            "pricing_description": "Configurable estimated application accounting ($0.075 / 1M input, $0.300 / 1M output for Flash tier). Not an invoice from Google."
+        },
+        "metrics": {
+            # 1. Total documents processed
+            "total_documents_processed": total_processed,
+            # 2. Gemini-processed documents
+            "gemini_documents_count": gemini_docs,
+            # 3. Locally processed documents
+            "locally_processed_documents": local_docs,
+            # 4. Total Gemini API calls
+            "total_api_calls": total_calls,
+            # 5. Successful API calls
+            "successful_calls": row["successful_calls"] if row and row["successful_calls"] is not None else 0,
+            # 6. Failed API calls
+            "failed_calls": row["failed_calls"] if row and row["failed_calls"] is not None else 0,
+            # 7. Total input tokens
+            "total_prompt_tokens": prompt_tokens,
+            # 8. Total output tokens
+            "total_candidate_tokens": cand_tokens,
+            # 9. Total tokens consumed
+            "total_tokens": tot_tokens,
+            # 10. Estimated cumulative API cost
+            "estimated_total_cost": round(cost_val, 6) if cost_val is not None else None,
+            "cost_available": cost_val is not None,
+            # 11. Average API response latency
+            "avg_latency_ms": round(row["avg_latency_ms"]) if row and row["avg_latency_ms"] is not None else None
+        },
+        "recent_logs": recent_logs
+    }
+
+
+def get_ai_usage_history(
+    limit: int = 50,
+    offset: int = 0,
+    status_filter: Optional[str] = None,
+    db_path: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Retrieve paginated individual request-level AI usage records.
+    Requirement 3 & 8: Historical audit ledger of individual API calls.
+    """
+    conn = get_db_connection(db_path)
+    cursor = conn.cursor()
+
+    where_clause = "WHERE u.provider = 'gemini'"
+    params: List[Any] = []
+    if status_filter and status_filter.lower() in ("success", "error"):
+        where_clause += " AND u.status = ?"
+        params.append(status_filter.lower())
+
+    cursor.execute(f"SELECT COUNT(*) as total FROM ai_usage_logs u {where_clause}", tuple(params))
+    total_count = cursor.fetchone()["total"]
+
+    query = f"""
+        SELECT 
+            u.id, u.document_id, u.applicant_id, u.provider, u.model,
+            u.prompt_tokens, u.candidate_tokens, u.total_tokens,
+            u.latency_ms, u.status, u.estimated_cost, u.error_message, u.created_at,
+            u.channel, u.request_type,
+            d.original_filename, d.document_type
+        FROM ai_usage_logs u
+        LEFT JOIN documents d ON u.document_id = d.id
+        {where_clause}
+        ORDER BY u.id DESC
+        LIMIT ? OFFSET ?
+    """
+    params.extend([limit, offset])
+    cursor.execute(query, tuple(params))
+    logs = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+
+    return {
+        "logs": logs,
+        "total_count": total_count,
+        "limit": limit,
+        "offset": offset
     }

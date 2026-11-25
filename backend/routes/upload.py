@@ -355,7 +355,7 @@ def review_document(document_id: str):
     """
     body = request.get_json(silent=True) or {}
     decision = body.get("decision", "approved").lower()
-    if decision == "resubmission":
+    if decision in ("resubmission", "resubmit"):
         decision = "resubmission_requested"
     if decision not in ("approved", "rejected", "manual_review", "resubmission_requested", "pending"):
         return format_response(

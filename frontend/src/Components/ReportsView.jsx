@@ -19,6 +19,7 @@ export default function ReportsView() {
 
   // Expandable row details state
   const [expandedApplicantIds, setExpandedApplicantIds] = useState(new Set());
+  const [showUsageLedger, setShowUsageLedger] = useState(false);
 
   const toggleExpand = (id) => {
     setExpandedApplicantIds((prev) => {
@@ -208,6 +209,214 @@ export default function ReportsView() {
           <div className="text-[11px] text-amber-700 mt-0.5">Discrepancy / manual review</div>
         </div>
       </div>
+
+      {/* AI Usage & Cost Economics (Google Gemini) - Requirement 8 */}
+      <section className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#E2E8F0]">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="material-symbols-outlined text-[20px] text-[#2563EB]">smart_toy</span>
+            <h3 className="text-[15px] font-bold text-[#0F172A]">AI Document Intelligence & Token Telemetry</h3>
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+              Google Gemini
+            </span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Local OCR: $0.00 Cost
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5 text-[12px] text-[#64748B] flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span>Model:</span>
+              <code className="px-2 py-0.5 bg-slate-100 rounded text-[11px] font-mono text-[#0F172A] font-semibold">
+                {reportSummary?.ai_usage?.model || 'gemini-3.5-flash-lite'}
+              </code>
+            </div>
+            <button
+              onClick={() => setShowUsageLedger(!showUsageLedger)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold rounded border border-[#CBD5E1] bg-[#F8FAFC] hover:bg-slate-100 text-[#0F172A] transition-colors shadow-2xs"
+            >
+              <span className="material-symbols-outlined text-[14px] text-[#2563EB]">
+                {showUsageLedger ? 'expand_less' : 'receipt_long'}
+              </span>
+              {showUsageLedger ? 'Hide API Ledger' : `View API Ledger (${reportSummary?.ai_usage?.recent_logs?.length ?? 0})`}
+            </button>
+          </div>
+        </div>
+
+        {/* 11 Requirement Metrics Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {/* Metric 1 & 2 & 3: Total Docs, Gemini Docs, Locally Processed Docs */}
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Total Docs Processed</div>
+            <div className="text-[20px] font-bold text-[#0F172A] mt-0.5">
+              {reportSummary?.ai_usage?.metrics?.total_documents_processed ?? reportSummary?.total_documents ?? 0}
+            </div>
+            <div className="text-[10px] text-[#64748B] mt-0.5">
+              <span className="text-blue-700 font-semibold">{reportSummary?.ai_usage?.metrics?.gemini_documents_count ?? 0}</span> Gemini • <span className="text-slate-700 font-semibold">{reportSummary?.ai_usage?.metrics?.locally_processed_documents ?? 0}</span> local OCR
+            </div>
+          </div>
+
+          {/* Metric 4 & 5 & 6: Total Calls, Successful Calls, Failed Calls */}
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Gemini API Calls</div>
+            <div className="text-[20px] font-bold text-[#2563EB] mt-0.5">
+              {reportSummary?.ai_usage?.metrics?.total_api_calls ?? 0}
+            </div>
+            <div className="text-[10px] text-[#64748B] mt-0.5">
+              <span className="text-emerald-700 font-semibold">{reportSummary?.ai_usage?.metrics?.successful_calls ?? 0}</span> ok • <span className="text-rose-600 font-semibold">{reportSummary?.ai_usage?.metrics?.failed_calls ?? 0}</span> err
+            </div>
+          </div>
+
+          {/* Metric 7: Total Prompt / Input Tokens */}
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Prompt Tokens</div>
+            <div className="text-[20px] font-bold text-[#0F172A] mt-0.5">
+              {reportSummary?.ai_usage?.metrics?.total_prompt_tokens
+                ? reportSummary.ai_usage.metrics.total_prompt_tokens.toLocaleString()
+                : '0'}
+            </div>
+            <div className="text-[10px] text-[#64748B] mt-0.5">Input payload tokens</div>
+          </div>
+
+          {/* Metric 8: Total Candidate / Output Tokens */}
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Candidate Tokens</div>
+            <div className="text-[20px] font-bold text-[#0F172A] mt-0.5">
+              {reportSummary?.ai_usage?.metrics?.total_candidate_tokens
+                ? reportSummary.ai_usage.metrics.total_candidate_tokens.toLocaleString()
+                : '0'}
+            </div>
+            <div className="text-[10px] text-[#64748B] mt-0.5">JSON extraction output</div>
+          </div>
+
+          {/* Metric 9: Total Tokens Consumed */}
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Total Tokens</div>
+            <div className="text-[20px] font-bold text-[#0F172A] mt-0.5">
+              {reportSummary?.ai_usage?.metrics?.total_tokens
+                ? reportSummary.ai_usage.metrics.total_tokens.toLocaleString()
+                : '0'}
+            </div>
+            <div className="text-[10px] text-[#64748B] mt-0.5">Billed token volume</div>
+          </div>
+
+          {/* Metric 10 & 11: Estimated Cumulative Cost & Average Latency */}
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Estimated Cost</div>
+            <div className="text-[20px] font-bold text-emerald-700 mt-0.5">
+              {reportSummary?.ai_usage?.metrics?.cost_available && reportSummary?.ai_usage?.metrics?.estimated_total_cost !== null
+                ? `$${reportSummary.ai_usage.metrics.estimated_total_cost.toFixed(4)}`
+                : 'Unavailable*'}
+            </div>
+            <div className="text-[10px] text-[#64748B] mt-0.5">
+              Avg latency: <span className="font-semibold text-slate-700">{reportSummary?.ai_usage?.metrics?.avg_latency_ms ? `${reportSummary.ai_usage.metrics.avg_latency_ms} ms` : '—'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Informative Guidance & Cost Transparency */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-[#64748B] pt-1 border-t border-[#F1F5F9] gap-1">
+          <div>
+            * Pricing tier: <span className="font-semibold text-slate-700">${reportSummary?.ai_usage?.pricing?.input_per_m ?? 0.075}</span> / 1M input, <span className="font-semibold text-slate-700">${reportSummary?.ai_usage?.pricing?.output_per_m ?? 0.3}</span> / 1M output (Flash tier).
+            {(!reportSummary?.ai_usage?.metrics?.cost_available) && (
+              <span className="ml-1 text-slate-500">(Historical documents without token telemetry are marked cost unavailable).</span>
+            )}
+          </div>
+          <div className="text-emerald-700 font-medium">
+            Local OCR fallback documents incur $0.00 API cost.
+          </div>
+        </div>
+
+        {/* API Transaction Telemetry Ledger */}
+        {showUsageLedger && (
+          <div className="mt-3 pt-3 border-t border-[#E2E8F0] space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-[13px] font-bold text-[#0F172A] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px] text-[#2563EB]">list_alt</span>
+                Recent Gemini API Transaction Ledger
+              </h4>
+              <span className="text-[11px] text-[#64748B]">Showing recent {reportSummary?.ai_usage?.recent_logs?.length ?? 0} request records</span>
+            </div>
+
+            {(!reportSummary?.ai_usage?.recent_logs || reportSummary.ai_usage.recent_logs.length === 0) ? (
+              <div className="text-center py-6 text-[12px] text-[#64748B] bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
+                No Gemini API calls recorded yet. Documents processed via local OCR incur no API telemetry.
+              </div>
+            ) : (
+              <div className="overflow-x-auto border border-[#E2E8F0] rounded-lg">
+                <table className="w-full text-left text-[12px] border-collapse bg-white">
+                  <thead>
+                    <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
+                      <th className="py-2.5 px-3">Time</th>
+                      <th className="py-2.5 px-3">Document / Applicant</th>
+                      <th className="py-2.5 px-3">Channel / Type</th>
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3">Tokens (In / Out / Tot)</th>
+                      <th className="py-2.5 px-3">Latency</th>
+                      <th className="py-2.5 px-3">Estimated Cost</th>
+                      <th className="py-2.5 px-3">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E2E8F0]">
+                    {reportSummary.ai_usage.recent_logs.map((log) => (
+                      <tr key={log.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-2 px-3 text-[#64748B] font-mono text-[11px] whitespace-nowrap">
+                          {log.created_at ? log.created_at.replace('T', ' ').slice(0, 19) : '—'}
+                        </td>
+                        <td className="py-2 px-3">
+                          <div className="font-semibold text-[#0F172A]">{log.document_id || 'System Probe'}</div>
+                          {log.applicant_id && (
+                            <div className="text-[10px] text-[#64748B] font-mono">{log.applicant_id}</div>
+                          )}
+                          {log.original_filename && (
+                            <div className="text-[10px] text-slate-500 truncate max-w-[140px]">{log.original_filename}</div>
+                          )}
+                        </td>
+                        <td className="py-2 px-3">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-100 text-slate-700">
+                            {log.channel || 'SDK'}
+                          </span>
+                          {log.request_type && log.request_type !== 'multimodal_extraction' && (
+                            <div className="text-[10px] text-slate-400">{log.request_type}</div>
+                          )}
+                        </td>
+                        <td className="py-2 px-3">
+                          {log.status === 'success' ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              SUCCESS
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200" title={log.error_message || 'Error'}>
+                              ERROR
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 px-3 font-mono text-[11px]">
+                          {log.total_tokens !== null && log.total_tokens !== undefined ? (
+                            <span>
+                              <span className="text-[#64748B]">{log.prompt_tokens ?? 0}</span> / <span className="text-slate-700">{log.candidate_tokens ?? 0}</span> (<span className="font-bold text-[#0F172A]">{log.total_tokens}</span>)
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-3 text-[#64748B] font-mono text-[11px]">
+                          {log.latency_ms !== null && log.latency_ms !== undefined ? `${log.latency_ms} ms` : '—'}
+                        </td>
+                        <td className="py-2 px-3 font-semibold text-emerald-700 font-mono text-[11px]">
+                          {log.estimated_cost !== null && log.estimated_cost !== undefined ? `$${log.estimated_cost.toFixed(6)}` : '—'}
+                        </td>
+                        <td className="py-2 px-3 text-[11px] text-[#64748B] max-w-[200px] truncate" title={log.error_message || ''}>
+                          {log.error_message ? <span className="text-rose-600">{log.error_message}</span> : <span className="text-slate-400">{log.model}</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
       {/* Applicant Verification Audit Ledger */}
       <section className="bg-white border border-[#E2E8F0] rounded-xl shadow-xs overflow-hidden space-y-4 p-6">

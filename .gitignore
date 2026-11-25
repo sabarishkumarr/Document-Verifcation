@@ -24,6 +24,13 @@ backend/venv/
 backend/database/*.db
 backend/database/*.sqlite
 backend/database/*.bak*
+backend/database/backups/
+backend/database/backups/*
+
+# PostgreSQL local data & dumps
+postgres-data/
+pg_data/
+*.dump
 
 # Upload and processed storage (ignore stored user documents, keep folder structures)
 storage/uploads/*

@@ -225,11 +225,14 @@ class DocumentProcessor:
         extraction_strategy = "local_rule_extraction"
 
         if self.ai_extractor.is_configured() and stored_file_path and stored_file_path.exists():
+            app_id_for_log = extraction.get("applicant_id") or (doc.get("applicant_id") if doc else None)
             ai_result = self.ai_extractor.extract_from_file(
                 file_path=stored_file_path,
                 mime_type=doc.get("mime_type") if doc else None,
                 original_filename=doc.get("original_filename") if doc else None,
-                preextracted_text=raw_text
+                preextracted_text=raw_text,
+                document_id=document_id,
+                applicant_id=app_id_for_log
             )
 
         if ai_result and ai_result.get("success") and ai_result.get("fields"):
@@ -262,6 +265,7 @@ class DocumentProcessor:
 
         else:
             # Fallback to local rule-based classification and field extraction
+            # Local operations (PyMuPDF, Tesseract OCR, OpenCV, regex) do NOT create Gemini usage logs or charges
             extraction_strategy = "local_rule_extraction"
             classification = DocumentClassifier.classify(raw_text)
             classified_type = classification["classified_type"]

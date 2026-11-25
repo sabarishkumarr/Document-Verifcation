@@ -33,6 +33,8 @@ export const api = {
   // Dashboard Statistics
   getDashboardStats: (dataset = 'all') => request(dataset && dataset !== 'all' ? `/dashboard/stats?dataset=${dataset}` : '/dashboard/stats'),
   getReportsSummary: (dataset = 'all') => request(dataset && dataset !== 'all' ? `/reports/summary?dataset=${dataset}` : '/reports/summary'),
+  getAiUsage: () => request('/reports/ai-usage'),
+  verifyAiModel: () => request('/reports/verify-model'),
   getReportDownloadUrl: (format = 'xlsx', dataset = 'all') => `${API_BASE}/reports/download?format=${format}&dataset=${dataset}`,
 
   // Document Upload & Processing

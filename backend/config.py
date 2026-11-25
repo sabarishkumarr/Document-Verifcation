@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -35,7 +36,15 @@ class Config:
     ALLOWED_EXTENSIONS = {"pdf", "jpg", "jpeg", "png"}
     
     # Database
+    DATABASE_TYPE = os.getenv("DATABASE_TYPE", "sqlite").lower()
     DATABASE_PATH = os.getenv("DATABASE_PATH", str(BACKEND_DIR / "database" / "veridoc.db"))
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+    POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", 5432))
+    POSTGRES_DB = os.getenv("POSTGRES_DB", "veridoc_db")
+    POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "")
+    POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE", "prefer")
     
     # Allowed CORS origins for local React dev server
     CORS_ORIGINS = [
@@ -61,6 +70,37 @@ class Config:
     AI_MODEL = GEMINI_MODEL
     AI_TIMEOUT = int(os.getenv("AI_TIMEOUT", 30))
 
+    # Gemini Token Pricing Settings (USD per million tokens)
+    # Verified public pricing for Gemini 1.5/2.0 Flash tier: $0.075 / 1M prompt tokens, $0.300 / 1M output tokens
+    _raw_price_input = os.getenv("GEMINI_PRICE_PER_M_INPUT_TOKENS")
+    GEMINI_PRICE_PER_M_INPUT_TOKENS = float(_raw_price_input) if _raw_price_input not in (None, "") else 0.075
+
+    _raw_price_output = os.getenv("GEMINI_PRICE_PER_M_OUTPUT_TOKENS")
+    GEMINI_PRICE_PER_M_OUTPUT_TOKENS = float(_raw_price_output) if _raw_price_output not in (None, "") else 0.300
+
+
+def calculate_gemini_cost(
+    prompt_tokens: Optional[int],
+    candidate_tokens: Optional[int],
+    price_per_m_input: Optional[float] = None,
+    price_per_m_output: Optional[float] = None
+) -> Optional[float]:
+    """
+    Calculate estimated Gemini API cost in USD based on verified per-million-token pricing.
+    Returns None if token metadata is missing or pricing is not configured.
+    """
+    if prompt_tokens is None or candidate_tokens is None:
+        return None
+
+    p_in = price_per_m_input if price_per_m_input is not None else Config.GEMINI_PRICE_PER_M_INPUT_TOKENS
+    p_out = price_per_m_output if price_per_m_output is not None else Config.GEMINI_PRICE_PER_M_OUTPUT_TOKENS
+
+    if p_in is None or p_out is None:
+        return None
+
+    cost = ((prompt_tokens * p_in) / 1_000_000.0) + ((candidate_tokens * p_out) / 1_000_000.0)
+    return round(cost, 6)
+
 
 
 
@@ -74,6 +114,7 @@ class TestingConfig(Config):
     """Testing environment configuration."""
     DEBUG = False
     TESTING = True
+    DATABASE_TYPE = "sqlite"
     # In-memory or isolated test database
     DATABASE_PATH = ":memory:"
     UPLOAD_FOLDER = STORAGE_DIR / "test_uploads"

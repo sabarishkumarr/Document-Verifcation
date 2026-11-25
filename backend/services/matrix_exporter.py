@@ -5,6 +5,7 @@ Generates genuine Excel XLSX workbooks and CSV files from the applicant comparis
 
 import io
 import csv
+from datetime import datetime
 from typing import Dict, Any, List
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -167,154 +168,6 @@ def export_comparison_matrix_to_xlsx(matrix_data: Dict[str, Any]) -> bytes:
     return output.getvalue()
 
 
-def export_reports_summary_to_xlsx(report_data: Dict[str, Any]) -> bytes:
-    """
-    Generate a complete business-facing compliance audit workbook (.xlsx)
-    with 'KYC Summary' and 'Applicant Audit Ledger' worksheets.
-    """
-    wb = openpyxl.Workbook()
-
-    # Sheet 1: Summary Dashboard
-    ws_summary = wb.active
-    ws_summary.title = "KYC Summary"
-
-    font_title = Font(name="Calibri", size=16, bold=True, color="0F172A")
-    font_section = Font(name="Calibri", size=13, bold=True, color="1E293B")
-    font_bold = Font(name="Calibri", size=11, bold=True, color="0F172A")
-    font_regular = Font(name="Calibri", size=11, color="334155")
-    font_header = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
-
-    fill_header = PatternFill(start_color="0F172A", end_color="0F172A", fill_type="solid")
-    fill_alt = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
-    fill_green = PatternFill(start_color="EDF4EE", end_color="EDF4EE", fill_type="solid")
-    fill_red = PatternFill(start_color="F9EFEB", end_color="F9EFEB", fill_type="solid")
-    fill_amber = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
-
-    thin_border = Border(
-        left=Side(style="thin", color="E2E8F0"),
-        right=Side(style="thin", color="E2E8F0"),
-        top=Side(style="thin", color="E2E8F0"),
-        bottom=Side(style="thin", color="E2E8F0")
-    )
-
-    ws_summary["A1"] = "VERIDOC AI — KYC COMPLIANCE AUDIT REPORT"
-    ws_summary["A1"].font = font_title
-    ws_summary["A2"] = f"Generated: {report_data.get('generated_at', '')}  |  Scope: {report_data.get('dataset_scope', 'all').upper()}"
-    ws_summary["A2"].font = Font(name="Calibri", size=10, italic=True, color="64748B")
-
-    # Section A: Summary Metrics
-    ws_summary["A4"] = "A. KYC Processing Summary"
-    ws_summary["A4"].font = font_section
-
-    summary_items = [
-        ("Total Applicants", report_data.get("total_applicants", 0)),
-        ("Total Uploaded Documents", report_data.get("total_documents", 0)),
-        ("Verified Applicants", report_data.get("verified_applicants", 0)),
-        ("Pending Review Applicants", report_data.get("pending_applicants", 0)),
-        ("Applicants Requiring Attention", report_data.get("attention_applicants", 0)),
-        ("Successfully Processed Documents", report_data.get("processed_documents", report_data.get("total_documents", 0))),
-        ("Failed / Unreadable Documents", report_data.get("failed_documents", 0)),
-    ]
-
-    for idx, (label, val) in enumerate(summary_items, start=5):
-        ws_summary.cell(row=idx, column=1, value=label).font = font_bold
-        ws_summary.cell(row=idx, column=1).border = thin_border
-        val_cell = ws_summary.cell(row=idx, column=2, value=val)
-        val_cell.font = font_bold
-        val_cell.border = thin_border
-        val_cell.alignment = Alignment(horizontal="right")
-
-    # Section B: Category Breakdown
-    cat_start = len(summary_items) + 7
-    ws_summary.cell(row=cat_start, column=1, value="B. Document Category Breakdown").font = font_section
-
-    categories = report_data.get("category_breakdown", {})
-    if not categories:
-        categories = {"PAN": 0, "Aadhaar": 0, "Passport": 0, "Voter ID": 0, "Driving Licence": 0, "Unknown": 0}
-
-    for idx, (cat_name, cat_count) in enumerate(categories.items(), start=cat_start + 1):
-        ws_summary.cell(row=idx, column=1, value=str(cat_name).replace("_", " ").title()).font = font_regular
-        ws_summary.cell(row=idx, column=1).border = thin_border
-        c_cell = ws_summary.cell(row=idx, column=2, value=cat_count)
-        c_cell.font = font_bold
-        c_cell.border = thin_border
-        c_cell.alignment = Alignment(horizontal="right")
-
-    ws_summary.column_dimensions["A"].width = 38
-    ws_summary.column_dimensions["B"].width = 20
-
-    # Sheet 2: Applicant Audit Ledger
-    ws_ledger = wb.create_sheet(title="Applicant Audit Ledger")
-    ledger_headers = [
-        "Applicant Reference",
-        "Applicant Name",
-        "Total Documents",
-        "Document Types",
-        "Verification Status",
-        "Cross-Check Verdict",
-        "Consistency Score",
-        "Concise Discrepancy Summary",
-        "Last Updated"
-    ]
-    ws_ledger.append(ledger_headers)
-    ws_ledger.row_dimensions[1].height = 28
-
-    for c_idx in range(1, len(ledger_headers) + 1):
-        cell = ws_ledger.cell(row=1, column=c_idx)
-        cell.font = font_header
-        cell.fill = fill_header
-        cell.alignment = Alignment(horizontal="center", vertical="center")
-        cell.border = thin_border
-
-    applicants = report_data.get("applicants", [])
-    for app in applicants:
-        status = str(app.get("status", "pending")).replace("_", " ").title()
-        verdict = str(app.get("verdict", "PENDING")).replace("_", " ").title()
-        discs = app.get("discrepancies", [])
-        disc_text = "; ".join(discs) if discs else "Passed all validations"
-
-        row_data = [
-            app.get("id"),
-            app.get("name"),
-            app.get("doc_count", 0),
-            ", ".join(app.get("doc_types", [])),
-            status,
-            verdict,
-            f"{app.get('consistency_score', 0)}%",
-            disc_text,
-            app.get("created_at") or ""
-        ]
-        ws_ledger.append(row_data)
-        cur_row = ws_ledger.max_row
-        ws_ledger.row_dimensions[cur_row].height = 20
-
-        for col_idx in range(1, len(row_data) + 1):
-            c = ws_ledger.cell(row=cur_row, column=col_idx)
-            c.border = thin_border
-            c.font = font_regular
-            c.alignment = Alignment(vertical="center")
-
-        # Color-code status cell (col 5)
-        st_cell = ws_ledger.cell(row=cur_row, column=5)
-        if "Verified" in status:
-            st_cell.fill = fill_green
-        elif "Attention" in status:
-            st_cell.fill = fill_red
-        else:
-            st_cell.fill = fill_amber
-
-    # Auto-adjust column widths for ledger
-    for col in ws_ledger.columns:
-        col_letter = get_column_letter(col[0].column)
-        max_len = max(len(str(cell.value or "")) for cell in col)
-        ws_ledger.column_dimensions[col_letter].width = max(min(max_len + 3, 50), 14)
-
-    output = io.BytesIO()
-    wb.save(output)
-    return output.getvalue()
-
-
-
 def export_comparison_matrix_to_csv(matrix_data: Dict[str, Any]) -> str:
     """Generate CSV string matching the comparison matrix."""
     output = io.StringIO()
@@ -366,7 +219,6 @@ def export_reports_summary_to_xlsx(report_data: Dict[str, Any]) -> bytes:
     font_header = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
 
     fill_header = PatternFill(start_color="0F172A", end_color="0F172A", fill_type="solid")
-    fill_alt = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
     fill_green = PatternFill(start_color="EDF4EE", end_color="EDF4EE", fill_type="solid")
     fill_red = PatternFill(start_color="F9EFEB", end_color="F9EFEB", fill_type="solid")
     fill_amber = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
@@ -454,6 +306,14 @@ def export_reports_summary_to_xlsx(report_data: Dict[str, Any]) -> bytes:
         discs = app.get("discrepancies", [])
         disc_text = "; ".join(discs) if discs else "Passed all validations"
 
+        created = app.get("created_at")
+        if isinstance(created, datetime):
+            if created.tzinfo is not None:
+                created = created.replace(tzinfo=None)
+            created_str = created.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            created_str = str(created) if created else ""
+
         row_data = [
             app.get("id"),
             app.get("name"),
@@ -463,7 +323,7 @@ def export_reports_summary_to_xlsx(report_data: Dict[str, Any]) -> bytes:
             verdict,
             f"{app.get('consistency_score', 0)}%",
             disc_text,
-            app.get("created_at") or ""
+            created_str
         ]
         ws_ledger.append(row_data)
         cur_row = ws_ledger.max_row
@@ -493,4 +353,5 @@ def export_reports_summary_to_xlsx(report_data: Dict[str, Any]) -> bytes:
     output = io.BytesIO()
     wb.save(output)
     return output.getvalue()
+
 

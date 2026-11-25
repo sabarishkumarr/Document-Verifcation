@@ -24,6 +24,7 @@ except ImportError:
     GENAI_SDK_AVAILABLE = False
 
 from backend.services.field_extractor import mask_aadhaar, mask_id_number, parse_date
+from backend.config import Config, calculate_gemini_cost
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +119,50 @@ class AIDocumentExtractor:
                     logger.warning(f"Could not initialize Google GenAI SDK client: {e}")
                     self.genai_client = None
 
+        # Pricing configuration
+        self.price_input = Config.GEMINI_PRICE_PER_M_INPUT_TOKENS
+        self.price_output = Config.GEMINI_PRICE_PER_M_OUTPUT_TOKENS
+
+    def _record_api_attempt(
+        self,
+        document_id: Optional[str],
+        applicant_id: Optional[str],
+        channel: str,
+        status: str,
+        prompt_tokens: Optional[int] = None,
+        candidate_tokens: Optional[int] = None,
+        total_tokens: Optional[int] = None,
+        estimated_cost: Optional[float] = None,
+        latency_ms: Optional[int] = None,
+        error_message: Optional[str] = None,
+        request_type: str = "multimodal_extraction"
+    ) -> None:
+        """
+        Safely record an individual Gemini request-level API attempt in SQLite.
+        Errors during logging are swallowed and logged as warnings so AI extraction never fails due to logging.
+        """
+        if self.provider != "gemini":
+            return
+        try:
+            from backend.database.db import insert_ai_usage_log
+            insert_ai_usage_log({
+                "document_id": document_id,
+                "applicant_id": applicant_id,
+                "provider": "gemini",
+                "model": self.model,
+                "prompt_tokens": prompt_tokens,
+                "candidate_tokens": candidate_tokens,
+                "total_tokens": total_tokens,
+                "estimated_cost": estimated_cost,
+                "latency_ms": latency_ms,
+                "status": status,
+                "error_message": self._sanitize_error(error_message) if error_message else None,
+                "request_type": request_type,
+                "channel": channel
+            })
+        except Exception as e:
+            logger.warning(f"Failed to record AI usage log attempt: {e}")
+
     @staticmethod
     def _sanitize_error(error_str: str) -> str:
         """Strip API keys and sensitive tokens from error messages."""
@@ -164,7 +209,9 @@ class AIDocumentExtractor:
         file_path: Path | str,
         mime_type: Optional[str] = None,
         original_filename: Optional[str] = None,
-        preextracted_text: Optional[str] = None
+        preextracted_text: Optional[str] = None,
+        document_id: Optional[str] = None,
+        applicant_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Execute AI multimodal structured extraction on a document file.
@@ -174,6 +221,8 @@ class AIDocumentExtractor:
             mime_type: MIME type (e.g. 'application/pdf', 'image/jpeg')
             original_filename: Source filename for reference
             preextracted_text: Optional text already extracted via PyMuPDF
+            document_id: Database document identifier for usage telemetry
+            applicant_id: Applicant identifier for usage telemetry
             
         Returns:
             Dict containing success status, extracted standardized KYC fields,
@@ -203,14 +252,37 @@ class AIDocumentExtractor:
             image_bytes, rendered_mime, page_num = self._prepare_document_media(path)
 
             # 2. Dispatch to provider
+            usage_dict = None
             if self.provider == "mock":
                 raw_json = self._mock_extraction(path, original_filename or path.name, preextracted_text)
             elif self.provider == "openai":
                 raw_json = self._call_openai(image_bytes, rendered_mime, preextracted_text)
             else:
-                raw_json = self._call_gemini(image_bytes, rendered_mime, preextracted_text)
+                call_res = self._call_gemini(
+                    image_bytes,
+                    rendered_mime,
+                    preextracted_text,
+                    document_id=document_id,
+                    applicant_id=applicant_id
+                )
+                if isinstance(call_res, tuple) and len(call_res) == 2:
+                    raw_json, usage_dict = call_res
+                else:
+                    raw_json, usage_dict = call_res, None
 
             latency_ms = int((time.time() - start_time) * 1000)
+
+            # Token usage & Cost estimation
+            prompt_tokens = usage_dict.get("prompt_tokens") if usage_dict else None
+            candidate_tokens = usage_dict.get("candidate_tokens") if usage_dict else None
+            total_tokens = usage_dict.get("total_tokens") if usage_dict else None
+
+            estimated_cost = calculate_gemini_cost(
+                prompt_tokens,
+                candidate_tokens,
+                self.price_input,
+                self.price_output
+            )
 
             # 3. Normalize into the standardized schema
             standardized = self._normalize_ai_response(raw_json, page_num=page_num)
@@ -218,7 +290,12 @@ class AIDocumentExtractor:
                 "provider": self.provider,
                 "model": self.model,
                 "latency_ms": latency_ms,
-                "source_page": page_num
+                "source_page": page_num,
+                "prompt_tokens": prompt_tokens,
+                "candidate_tokens": candidate_tokens,
+                "total_tokens": total_tokens,
+                "estimated_cost": estimated_cost,
+                "cost_available": estimated_cost is not None
             }
 
             logger.info(
@@ -276,74 +353,321 @@ class AIDocumentExtractor:
             with open(path, "rb") as f:
                 return f.read(), "application/octet-stream", 1
 
-    def _call_gemini(self, image_bytes: bytes, mime_type: str, preextracted_text: Optional[str] = None) -> Dict[str, Any]:
+    def _call_gemini(
+        self,
+        image_bytes: bytes,
+        mime_type: str,
+        preextracted_text: Optional[str] = None,
+        document_id: Optional[str] = None,
+        applicant_id: Optional[str] = None
+    ) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
         """
         Execute multimodal extraction via the official Google GenAI SDK (with REST fallback).
+        Captures usage_metadata from SDK or usageMetadata from REST when available.
+        Records individual request-level attempts in SQLite.
+        Returns (parsed_fields_dict, usage_dict).
         """
         clean_mime = mime_type if mime_type.startswith("image/") else "image/png"
+        sdk_err_context = None
 
         # 1. Primary: Use official Google GenAI SDK if initialized
         if self.genai_client is not None and GENAI_SDK_AVAILABLE:
-            contents = [
-                types.Part.from_bytes(data=image_bytes, mime_type=clean_mime),
-                SYSTEM_PROMPT
-            ]
-            if preextracted_text:
-                contents.append(f"Embedded digital text extracted from document:\n---\n{preextracted_text[:4000]}\n---")
+            t_sdk = time.time()
+            try:
+                contents = [
+                    types.Part.from_bytes(data=image_bytes, mime_type=clean_mime),
+                    SYSTEM_PROMPT
+                ]
+                if preextracted_text:
+                    contents.append(f"Embedded digital text extracted from document:\n---\n{preextracted_text[:4000]}\n---")
 
-            config = types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.1
-            )
-            response = self.genai_client.models.generate_content(
-                model=self.model,
-                contents=contents,
-                config=config
-            )
-            if not response or not response.text:
-                raise ValueError("Empty response received from Google Gemini API.")
-            return self._safe_parse_json(response.text)
+                config = types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.1
+                )
+                response = self.genai_client.models.generate_content(
+                    model=self.model,
+                    contents=contents,
+                    config=config
+                )
+                latency_sdk = int((time.time() - t_sdk) * 1000)
+                if not response or not response.text:
+                    raise ValueError("Empty response received from Google Gemini API.")
+
+                parsed = self._safe_parse_json(response.text)
+
+                # Capture usage_metadata from Gemini SDK response (Requirement 1 & 4)
+                usage_dict = None
+                usage_meta = getattr(response, "usage_metadata", None)
+                if usage_meta is not None:
+                    p_tokens = getattr(usage_meta, "prompt_token_count", None)
+                    c_tokens = getattr(usage_meta, "candidates_token_count", None)
+                    t_tokens = getattr(usage_meta, "total_token_count", None)
+                    if p_tokens is not None or c_tokens is not None or t_tokens is not None:
+                        usage_dict = {
+                            "prompt_tokens": p_tokens,
+                            "candidate_tokens": c_tokens,
+                            "total_tokens": t_tokens
+                        }
+
+                cost = calculate_gemini_cost(
+                    usage_dict.get("prompt_tokens") if usage_dict else None,
+                    usage_dict.get("candidate_tokens") if usage_dict else None,
+                    self.price_input,
+                    self.price_output
+                )
+
+                self._record_api_attempt(
+                    document_id=document_id,
+                    applicant_id=applicant_id,
+                    channel="google-genai SDK",
+                    status="success",
+                    prompt_tokens=usage_dict.get("prompt_tokens") if usage_dict else None,
+                    candidate_tokens=usage_dict.get("candidate_tokens") if usage_dict else None,
+                    total_tokens=usage_dict.get("total_tokens") if usage_dict else None,
+                    estimated_cost=cost,
+                    latency_ms=latency_sdk,
+                    error_message=None
+                )
+                return parsed, usage_dict
+
+            except Exception as sdk_err:
+                latency_sdk = int((time.time() - t_sdk) * 1000)
+                safe_sdk_err = self._sanitize_error(str(sdk_err))
+                sdk_err_context = safe_sdk_err
+                logger.warning(f"Google GenAI SDK call failed: {safe_sdk_err}. Retrying via REST fallback.")
+                self._record_api_attempt(
+                    document_id=document_id,
+                    applicant_id=applicant_id,
+                    channel="google-genai SDK",
+                    status="error",
+                    prompt_tokens=None,
+                    candidate_tokens=None,
+                    total_tokens=None,
+                    estimated_cost=None,
+                    latency_ms=latency_sdk,
+                    error_message=safe_sdk_err
+                )
+                # Fall through to REST fallback below
 
         # 2. Secondary: Direct HTTP REST fallback
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
-        b64_data = base64.b64encode(image_bytes).decode("utf-8")
-        prompt_parts: List[Dict[str, Any]] = [
-            {"text": SYSTEM_PROMPT}
-        ]
-        if preextracted_text:
+        t_rest = time.time()
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+            b64_data = base64.b64encode(image_bytes).decode("utf-8")
+            prompt_parts: List[Dict[str, Any]] = [
+                {"text": SYSTEM_PROMPT}
+            ]
+            if preextracted_text:
+                prompt_parts.append({
+                    "text": f"Embedded digital text extracted from document:\n---\n{preextracted_text[:4000]}\n---"
+                })
             prompt_parts.append({
-                "text": f"Embedded digital text extracted from document:\n---\n{preextracted_text[:4000]}\n---"
+                "inline_data": {
+                    "mime_type": clean_mime,
+                    "data": b64_data
+                }
             })
-        prompt_parts.append({
-            "inline_data": {
-                "mime_type": clean_mime,
-                "data": b64_data
+
+            payload = {
+                "contents": [{"parts": prompt_parts}],
+                "generationConfig": {
+                    "response_mime_type": "application/json",
+                    "temperature": 0.1
+                }
             }
-        })
 
-        payload = {
-            "contents": [{"parts": prompt_parts}],
-            "generationConfig": {
-                "response_mime_type": "application/json",
-                "temperature": 0.1
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"}
+            )
+
+            with urllib.request.urlopen(req, timeout=self.timeout) as response:
+                res_body = json.loads(response.read().decode("utf-8"))
+
+            latency_rest = int((time.time() - t_rest) * 1000)
+            candidates = res_body.get("candidates", [])
+            if not candidates:
+                raise ValueError("No response candidate returned by Gemini API.")
+
+            part_text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "{}")
+            parsed = self._safe_parse_json(part_text)
+
+            # Capture usageMetadata from REST fallback response (Requirement 2 & 4)
+            usage_dict = None
+            usage_meta = res_body.get("usageMetadata")
+            if isinstance(usage_meta, dict):
+                p_tokens = usage_meta.get("promptTokenCount")
+                c_tokens = usage_meta.get("candidatesTokenCount")
+                t_tokens = usage_meta.get("totalTokenCount")
+                if p_tokens is not None or c_tokens is not None or t_tokens is not None:
+                    usage_dict = {
+                        "prompt_tokens": p_tokens,
+                        "candidate_tokens": c_tokens,
+                        "total_tokens": t_tokens
+                    }
+
+            cost = calculate_gemini_cost(
+                usage_dict.get("prompt_tokens") if usage_dict else None,
+                usage_dict.get("candidate_tokens") if usage_dict else None,
+                self.price_input,
+                self.price_output
+            )
+
+            self._record_api_attempt(
+                document_id=document_id,
+                applicant_id=applicant_id,
+                channel="REST API",
+                status="success",
+                prompt_tokens=usage_dict.get("prompt_tokens") if usage_dict else None,
+                candidate_tokens=usage_dict.get("candidate_tokens") if usage_dict else None,
+                total_tokens=usage_dict.get("total_tokens") if usage_dict else None,
+                estimated_cost=cost,
+                latency_ms=latency_rest,
+                error_message=None
+            )
+            return parsed, usage_dict
+
+        except Exception as rest_err:
+            latency_rest = int((time.time() - t_rest) * 1000)
+            safe_rest_err = self._sanitize_error(str(rest_err))
+            self._record_api_attempt(
+                document_id=document_id,
+                applicant_id=applicant_id,
+                channel="REST API",
+                status="error",
+                prompt_tokens=None,
+                candidate_tokens=None,
+                total_tokens=None,
+                estimated_cost=None,
+                latency_ms=latency_rest,
+                error_message=safe_rest_err
+            )
+            if sdk_err_context:
+                raise RuntimeError(f"{sdk_err_context} (REST fallback also failed: {safe_rest_err})")
+            raise
+
+    def verify_model_support(self) -> Dict[str, Any]:
+        """
+        Verify the configured model ID against a real API request and report whether it is supported.
+        Requirement 11: Real API verification without exposing secrets.
+        """
+        if not self.is_configured():
+            return {
+                "supported": False,
+                "configured": False,
+                "model": self.model,
+                "provider": self.provider,
+                "message": "AI credentials not configured."
             }
-        }
 
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"}
-        )
+        t0 = time.time()
+        try:
+            if self.provider == "gemini":
+                if self.genai_client is not None and GENAI_SDK_AVAILABLE:
+                    res = self.genai_client.models.generate_content(
+                        model=self.model,
+                        contents="ping"
+                    )
+                    latency = int((time.time() - t0) * 1000)
+                    meta = getattr(res, "usage_metadata", None)
+                    p_tok = getattr(meta, "prompt_token_count", None) if meta else None
+                    c_tok = getattr(meta, "candidates_token_count", None) if meta else None
+                    t_tok = getattr(meta, "total_token_count", None) if meta else None
+                    cost = calculate_gemini_cost(p_tok, c_tok, self.price_input, self.price_output)
 
-        with urllib.request.urlopen(req, timeout=self.timeout) as response:
-            res_body = json.loads(response.read().decode("utf-8"))
+                    self._record_api_attempt(
+                        document_id=None,
+                        applicant_id=None,
+                        channel="google-genai SDK",
+                        status="success",
+                        prompt_tokens=p_tok,
+                        candidate_tokens=c_tok,
+                        total_tokens=t_tok,
+                        estimated_cost=cost,
+                        latency_ms=latency,
+                        request_type="model_verification"
+                    )
 
-        candidates = res_body.get("candidates", [])
-        if not candidates:
-            raise ValueError("No response candidate returned by Gemini API.")
+                    return {
+                        "supported": True,
+                        "configured": True,
+                        "model": self.model,
+                        "provider": "gemini",
+                        "channel": "google-genai SDK",
+                        "latency_ms": latency,
+                        "message": f"Model '{self.model}' verified successfully via Google GenAI SDK.",
+                        "usage_metadata_available": meta is not None
+                    }
+                else:
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+                    data = json.dumps({"contents": [{"parts": [{"text": "ping"}]}]}).encode("utf-8")
+                    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+                    with urllib.request.urlopen(req, timeout=10) as response:
+                        body = json.loads(response.read().decode("utf-8"))
+                        latency = int((time.time() - t0) * 1000)
+                        u_meta = body.get("usageMetadata", {})
+                        p_tok = u_meta.get("promptTokenCount")
+                        c_tok = u_meta.get("candidatesTokenCount")
+                        t_tok = u_meta.get("totalTokenCount")
+                        cost = calculate_gemini_cost(p_tok, c_tok, self.price_input, self.price_output)
 
-        part_text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "{}")
-        return self._safe_parse_json(part_text)
+                        self._record_api_attempt(
+                            document_id=None,
+                            applicant_id=None,
+                            channel="REST API",
+                            status="success",
+                            prompt_tokens=p_tok,
+                            candidate_tokens=c_tok,
+                            total_tokens=t_tok,
+                            estimated_cost=cost,
+                            latency_ms=latency,
+                            request_type="model_verification"
+                        )
+
+                        return {
+                            "supported": True,
+                            "configured": True,
+                            "model": self.model,
+                            "provider": "gemini",
+                            "channel": "REST API",
+                            "latency_ms": latency,
+                            "message": f"Model '{self.model}' verified successfully via REST endpoint.",
+                            "usage_metadata_available": "usageMetadata" in body
+                        }
+            else:
+                return {
+                    "supported": True,
+                    "configured": True,
+                    "model": self.model,
+                    "provider": self.provider,
+                    "message": f"Provider '{self.provider}' configured."
+                }
+        except Exception as e:
+            latency = int((time.time() - t0) * 1000)
+            safe_err = self._sanitize_error(str(e))
+            self._record_api_attempt(
+                document_id=None,
+                applicant_id=None,
+                channel="google-genai SDK" if (self.genai_client is not None and GENAI_SDK_AVAILABLE) else "REST API",
+                status="error",
+                prompt_tokens=None,
+                candidate_tokens=None,
+                total_tokens=None,
+                estimated_cost=None,
+                latency_ms=latency,
+                error_message=safe_err,
+                request_type="model_verification"
+            )
+            return {
+                "supported": False,
+                "configured": True,
+                "model": self.model,
+                "provider": self.provider,
+                "latency_ms": latency,
+                "message": f"Model verification failed: {safe_err}"
+            }
 
     def _call_openai(self, image_bytes: bytes, mime_type: str, preextracted_text: Optional[str] = None) -> Dict[str, Any]:
         """

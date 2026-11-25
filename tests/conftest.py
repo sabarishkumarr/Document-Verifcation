@@ -27,6 +27,7 @@ def app():
     app = create_app("testing")
     app.config.update({
         "TESTING": True,
+        "DATABASE_TYPE": "sqlite",
         "UPLOAD_FOLDER": temp_upload,
         "PROCESSED_FOLDER": temp_processed,
         "DATABASE_PATH": str(temp_db),

@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from flask import Blueprint, request, current_app, Response
-from backend.database.db import get_db_connection
+from backend.database.db import get_db_connection, get_ai_usage_summary, get_ai_usage_history
 from backend.services.comparator import CrossDocumentComparator
 from backend.services.matrix_exporter import export_reports_summary_to_xlsx
 from backend.utils.helpers import format_response
@@ -227,6 +227,8 @@ def generate_kyc_report_data(db_path: Optional[str] = None, dataset: Optional[st
 
     conn.close()
 
+    ai_usage = get_ai_usage_summary(db_path=db_path)
+
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "dataset_scope": dataset or "all",
@@ -239,6 +241,7 @@ def generate_kyc_report_data(db_path: Optional[str] = None, dataset: Optional[st
         "failed_documents": total_failed_docs,
         "category_breakdown": category_counts,
         "outcome_summary": outcome_counts,
+        "ai_usage": ai_usage,
         "applicants": report_applicants
     }
 
@@ -253,6 +256,46 @@ def get_reports_summary():
         success=True,
         message="KYC compliance report summary compiled successfully.",
         data=report_data
+    )
+
+
+@reports_bp.route("/ai-usage", methods=["GET"])
+def get_ai_usage_report():
+    """Retrieve Gemini API token usage, latency metrics, and estimated cost economics."""
+    db_path = current_app.config.get("DATABASE_PATH")
+    summary = get_ai_usage_summary(db_path=db_path)
+    return format_response(
+        success=True,
+        message="AI usage and token economics retrieved successfully.",
+        data=summary
+    )
+
+
+@reports_bp.route("/ai-usage/history", methods=["GET"])
+def get_ai_usage_history_report():
+    """Retrieve paginated individual request-level AI usage records."""
+    db_path = current_app.config.get("DATABASE_PATH")
+    limit = int(request.args.get("limit", 50))
+    offset = int(request.args.get("offset", 0))
+    status_filter = request.args.get("status")
+    history = get_ai_usage_history(limit=limit, offset=offset, status_filter=status_filter, db_path=db_path)
+    return format_response(
+        success=True,
+        message=f"Retrieved {len(history['logs'])} AI usage request logs.",
+        data=history
+    )
+
+
+@reports_bp.route("/verify-model", methods=["GET"])
+def verify_gemini_model():
+    """Verify configured Gemini model against real Google API request (Requirement 11)."""
+    from backend.services.ai_extractor import AIDocumentExtractor
+    extractor = AIDocumentExtractor()
+    result = extractor.verify_model_support()
+    return format_response(
+        success=result.get("supported", False),
+        message=result.get("message", "Model verification completed."),
+        data=result
     )
 
 
