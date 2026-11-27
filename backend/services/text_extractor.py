@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import logging
 from pathlib import Path
@@ -40,6 +41,70 @@ def resolve_tesseract_cmd(configured_cmd: Optional[str] = None) -> Optional[str]
             return win_path
 
     return None
+
+
+def find_text_bounding_box(
+    search_text: str,
+    spatial_tokens: List[Dict[str, Any]],
+    page_number: Optional[int] = None
+) -> Optional[List[int]]:
+    """
+    Search for a text snippet within spatial tokens and calculate the combined bounding box.
+    Returns normalized [ymin, xmin, ymax, xmax] (0-1000 scale) or None if not found.
+    """
+    if not search_text or not spatial_tokens:
+        return None
+
+    cleaned_search = re.sub(r"\s+", " ", search_text.strip().lower())
+    if not cleaned_search:
+        return None
+
+    tokens = [t for t in spatial_tokens if page_number is None or t.get("page") == page_number]
+    if not tokens:
+        tokens = spatial_tokens
+
+    search_words = cleaned_search.split()
+    n_words = len(search_words)
+
+    # 1. Multi-word exact / contiguous token sequence match
+    for i in range(len(tokens) - n_words + 1):
+        window_tokens = tokens[i:i + n_words]
+        window_str = " ".join(t.get("text", "").lower().strip(".,:;()[]{}") for t in window_tokens)
+        if window_str == cleaned_search or cleaned_search in window_str:
+            ymins = [t["bbox"][0] for t in window_tokens if "bbox" in t]
+            xmins = [t["bbox"][1] for t in window_tokens if "bbox" in t]
+            ymaxs = [t["bbox"][2] for t in window_tokens if "bbox" in t]
+            xmaxs = [t["bbox"][3] for t in window_tokens if "bbox" in t]
+            if ymins and xmins and ymaxs and xmaxs:
+                return [min(ymins), min(xmins), max(ymaxs), max(xmaxs)]
+
+    # 2. Substring matching in individual tokens
+    for token in tokens:
+        t_text = token.get("text", "").lower()
+        if cleaned_search in t_text or (len(cleaned_search) > 3 and t_text in cleaned_search):
+            return token.get("bbox")
+
+    # 3. Partial overlap matching (if search_words has multiple words)
+    if n_words > 1:
+        matched_indices = []
+        for word in search_words:
+            if len(word) < 3:
+                continue
+            for idx, token in enumerate(tokens):
+                if word in token.get("text", "").lower():
+                    matched_indices.append(idx)
+                    break
+        if matched_indices:
+            matched_tokens = [tokens[idx] for idx in matched_indices if "bbox" in tokens[idx]]
+            if matched_tokens:
+                ymins = [t["bbox"][0] for t in matched_tokens]
+                xmins = [t["bbox"][1] for t in matched_tokens]
+                ymaxs = [t["bbox"][2] for t in matched_tokens]
+                xmaxs = [t["bbox"][3] for t in matched_tokens]
+                return [min(ymins), min(xmins), max(ymaxs), max(xmaxs)]
+
+    return None
+
 
 
 def is_tesseract_available(tesseract_cmd: Optional[str] = None) -> Tuple[bool, Optional[str]]:
@@ -167,17 +232,42 @@ class TextExtractor:
             }
 
         pages_result: List[Dict[str, Any]] = []
+        all_spatial_tokens: List[Dict[str, Any]] = []
         overall_methods_used = set()
         tesseract_ok, tesseract_msg = self.check_ocr_ready()
 
         for page_idx in range(len(doc)):
             page_num = page_idx + 1
             page = doc[page_idx]
+            page_tokens: List[Dict[str, Any]] = []
 
             try:
                 # 1. Direct digital text extraction via PyMuPDF
                 digital_text = page.get_text("text").strip()
                 char_count = len(digital_text)
+
+                # Extract word tokens with normalized bounding boxes [ymin, xmin, ymax, xmax] (0-1000 scale)
+                rect = page.rect
+                pw = rect.width or 1.0
+                ph = rect.height or 1.0
+                try:
+                    words = page.get_text("words")
+                    for w in words:
+                        w_text = str(w[4]).strip()
+                        if not w_text:
+                            continue
+                        ymin = max(0, min(1000, int(round((w[1] / ph) * 1000))))
+                        xmin = max(0, min(1000, int(round((w[0] / pw) * 1000))))
+                        ymax = max(0, min(1000, int(round((w[3] / ph) * 1000))))
+                        xmax = max(0, min(1000, int(round((w[2] / pw) * 1000))))
+                        page_tokens.append({
+                            "text": w_text,
+                            "bbox": [ymin, xmin, ymax, xmax],
+                            "page": page_num,
+                            "confidence": 1.0
+                        })
+                except Exception as w_exc:
+                    logger.debug(f"Could not extract digital words on page {page_num}: {w_exc}")
 
                 # 2. Configurable Scanned Page Detection
                 # Criteria:
@@ -206,12 +296,15 @@ class TextExtractor:
                             "method": "digital_text" if char_count > 0 else "ocr_fallback",
                             "text": digital_text,
                             "error": error_detail,
-                            "character_count": char_count
+                            "character_count": char_count,
+                            "spatial_tokens": page_tokens
                         })
+                        all_spatial_tokens.extend(page_tokens)
                         overall_methods_used.add("digital_text" if char_count > 0 else "none")
                     else:
                         # Perform OCR on rendered page
-                        ocr_text, ocr_err = self._ocr_pdf_page(page, page_num)
+                        ocr_text, ocr_tokens, ocr_err = self._ocr_pdf_page(page, page_num)
+                        effective_tokens = ocr_tokens if ocr_tokens else page_tokens
                         if ocr_err:
                             pages_result.append({
                                 "page_number": page_num,
@@ -219,8 +312,10 @@ class TextExtractor:
                                 "method": "ocr_fallback",
                                 "text": digital_text,  # Keep any sparse digital text
                                 "error": ocr_err,
-                                "character_count": len(digital_text)
+                                "character_count": len(digital_text),
+                                "spatial_tokens": effective_tokens
                             })
+                            all_spatial_tokens.extend(effective_tokens)
                             overall_methods_used.add("ocr_fallback")
                         else:
                             pages_result.append({
@@ -229,8 +324,10 @@ class TextExtractor:
                                 "method": "ocr_fallback",
                                 "text": ocr_text,
                                 "error": None,
-                                "character_count": len(ocr_text)
+                                "character_count": len(ocr_text),
+                                "spatial_tokens": effective_tokens
                             })
+                            all_spatial_tokens.extend(effective_tokens)
                             overall_methods_used.add("ocr_fallback")
                 else:
                     # Digital page (or sparse digital page without images)
@@ -240,8 +337,10 @@ class TextExtractor:
                         "method": "digital_text",
                         "text": digital_text,
                         "error": None,
-                        "character_count": char_count
+                        "character_count": char_count,
+                        "spatial_tokens": page_tokens
                     })
+                    all_spatial_tokens.extend(page_tokens)
                     overall_methods_used.add("digital_text")
 
             except Exception as page_exc:
@@ -252,7 +351,8 @@ class TextExtractor:
                     "method": "unknown",
                     "text": "",
                     "error": f"Error extracting page {page_num}: {str(page_exc)}",
-                    "character_count": 0
+                    "character_count": 0,
+                    "spatial_tokens": []
                 })
 
         doc.close()
@@ -281,23 +381,52 @@ class TextExtractor:
             "total_pages": len(pages_result),
             "pages": pages_result,
             "full_text": full_text,
-            "character_count": len(full_text)
+            "character_count": len(full_text),
+            "spatial_tokens": all_spatial_tokens
         }
 
-    def _ocr_pdf_page(self, page: pymupdf.Page, page_num: int) -> Tuple[str, Optional[str]]:
-        """Render a single PDF page at high DPI and run Tesseract OCR."""
+    def _ocr_pdf_page(self, page: pymupdf.Page, page_num: int) -> Tuple[str, List[Dict[str, Any]], Optional[str]]:
+        """Render a single PDF page at high DPI and run Tesseract OCR with spatial tokens."""
         try:
             pix = page.get_pixmap(dpi=self.ocr_dpi)
             img_bytes = pix.tobytes("png")
             cv_img = self.preprocessor.read_image_from_bytes(img_bytes)
             if cv_img is None:
-                return "", f"Failed to decode rendered pixmap for page {page_num}"
+                return "", [], f"Failed to decode rendered pixmap for page {page_num}"
 
             preprocessed, _ = self.preprocessor.preprocess_image(cv_img)
             text = pytesseract.image_to_string(preprocessed, config="--psm 3 -l eng").strip()
-            return text, None
+
+            tokens: List[Dict[str, Any]] = []
+            try:
+                ocr_data = pytesseract.image_to_data(preprocessed, output_type=pytesseract.Output.DICT)
+                H, W = preprocessed.shape[:2]
+                n_boxes = len(ocr_data.get("text", []))
+                for i in range(n_boxes):
+                    t_str = str(ocr_data["text"][i]).strip()
+                    if not t_str:
+                        continue
+                    top = ocr_data["top"][i]
+                    left = ocr_data["left"][i]
+                    width = ocr_data["width"][i]
+                    height = ocr_data["height"][i]
+                    conf = float(ocr_data["conf"][i]) / 100.0 if ocr_data["conf"][i] != -1 else 0.5
+                    ymin = max(0, min(1000, int(round((top / H) * 1000))))
+                    xmin = max(0, min(1000, int(round((left / W) * 1000))))
+                    ymax = max(0, min(1000, int(round(((top + height) / H) * 1000))))
+                    xmax = max(0, min(1000, int(round(((left + width) / W) * 1000))))
+                    tokens.append({
+                        "text": t_str,
+                        "bbox": [ymin, xmin, ymax, xmax],
+                        "page": page_num,
+                        "confidence": max(0.0, min(1.0, conf))
+                    })
+            except Exception as tok_err:
+                logger.debug(f"Could not extract OCR data tokens for page {page_num}: {tok_err}")
+
+            return text, tokens, None
         except Exception as e:
-            return "", f"OCR failed on page {page_num}: {str(e)}"
+            return "", [], f"OCR failed on page {page_num}: {str(e)}"
 
     # -------------------------------------------------------------------------
     # Image OCR Pipeline
@@ -355,8 +484,34 @@ class TextExtractor:
             }
 
         # 3. Perform Tesseract OCR
+        tokens: List[Dict[str, Any]] = []
         try:
             extracted_text = pytesseract.image_to_string(preprocessed, config="--psm 3 -l eng").strip()
+            try:
+                ocr_data = pytesseract.image_to_data(preprocessed, output_type=pytesseract.Output.DICT)
+                H, W = preprocessed.shape[:2]
+                n_boxes = len(ocr_data.get("text", []))
+                for i in range(n_boxes):
+                    t_str = str(ocr_data["text"][i]).strip()
+                    if not t_str:
+                        continue
+                    top = ocr_data["top"][i]
+                    left = ocr_data["left"][i]
+                    width = ocr_data["width"][i]
+                    height = ocr_data["height"][i]
+                    conf = float(ocr_data["conf"][i]) / 100.0 if ocr_data["conf"][i] != -1 else 0.5
+                    ymin = max(0, min(1000, int(round((top / H) * 1000))))
+                    xmin = max(0, min(1000, int(round((left / W) * 1000))))
+                    ymax = max(0, min(1000, int(round(((top + height) / H) * 1000))))
+                    xmax = max(0, min(1000, int(round(((left + width) / W) * 1000))))
+                    tokens.append({
+                        "text": t_str,
+                        "bbox": [ymin, xmin, ymax, xmax],
+                        "page": 1,
+                        "confidence": max(0.0, min(1.0, conf))
+                    })
+            except Exception as tok_err:
+                logger.debug(f"Could not extract OCR data tokens for image: {tok_err}")
         except Exception as e:
             return {
                 "filename": original_filename,
@@ -369,10 +524,12 @@ class TextExtractor:
                     "method": "tesseract_ocr",
                     "text": "",
                     "error": str(e),
-                    "character_count": 0
+                    "character_count": 0,
+                    "spatial_tokens": []
                 }],
                 "full_text": "",
-                "character_count": 0
+                "character_count": 0,
+                "spatial_tokens": []
             }
 
         return {
@@ -387,10 +544,34 @@ class TextExtractor:
                     "method": "tesseract_ocr",
                     "text": extracted_text,
                     "error": None,
-                    "character_count": len(extracted_text)
+                    "character_count": len(extracted_text),
+                    "spatial_tokens": tokens
                 }
             ],
             "full_text": extracted_text,
             "character_count": len(extracted_text),
+            "spatial_tokens": tokens,
             "preprocessing_metadata": meta
         }
+
+    def extract_spatial_tokens(self, file_path: Path | str, original_filename: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Extract word tokens with normalized bounding boxes [ymin, xmin, ymax, xmax] (0-1000 scale).
+        Returns:
+            {
+                "spatial_tokens": [...],
+                "total_tokens": int,
+                "pages": [...],
+                "status": str
+            }
+        """
+        result = self.extract_from_file(file_path, original_filename=original_filename)
+        tokens = result.get("spatial_tokens", [])
+        return {
+            "filename": result.get("filename"),
+            "status": result.get("status"),
+            "total_tokens": len(tokens),
+            "spatial_tokens": tokens,
+            "pages": result.get("pages", [])
+        }
+

@@ -8,14 +8,15 @@ export default function Header({
   onUpdateOfficerName,
   onNavigateToDocument,
   onNavigateToApplicant,
-  onNavigateToWelcome,
+  onToggleWelcome,
 }) {
-  // Navigation tabs
+  // Navigation tabs - 6 focused enterprise pages
   const navItems = [
     { id: 'overview', label: 'Overview' },
+    { id: 'repository', label: 'Document Repository' },
     { id: 'upload', label: 'Upload Documents' },
-    { id: 'queue', label: 'Verification Queue' },
-    { id: 'applicants', label: 'Applicants' },
+    { id: 'verification', label: 'Verification' },
+    { id: 'triangulation', label: 'Triangulation' },
     { id: 'reports', label: 'Reports' },
   ];
 
@@ -121,31 +122,26 @@ export default function Header({
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0]">
       <div className="max-w-[1520px] mx-auto h-16 px-6 lg:px-8 flex items-center justify-between gap-6">
         
-        {/* Brand */}
-        <div className="flex items-center gap-4 shrink-0">
-          <div 
-            className="flex items-center gap-2.5 cursor-pointer group"
-            onClick={() => onSelectTab('overview')}
-            title="Overview Workspace"
-          >
-            <div className="w-2.5 h-2.5 rounded-full bg-[#2563EB] group-hover:scale-125 transition-transform"></div>
-            <span className="font-bold text-[13px] tracking-wider uppercase text-[#0F172A]">
-              VERIDOC AI <span className="font-normal text-[#64748B]">| KYC INTELLIGENCE</span>
-            </span>
-          </div>
-
+        {/* Brand & Blue Dot Welcome Trigger */}
+        <div className="flex items-center gap-3 shrink-0">
           <button
-            onClick={onNavigateToWelcome}
-            className="hidden xl:inline-flex items-center gap-1 text-[12px] text-[#64748B] hover:text-[#0F172A] px-2 py-0.5 rounded border border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors"
-            title="Return to Welcome Landing Screen"
+            type="button"
+            onClick={onToggleWelcome}
+            className="w-3 h-3 rounded-full bg-[#2563EB] hover:scale-125 hover:ring-4 hover:ring-blue-100 transition-all focus:outline-none cursor-pointer"
+            title="Welcome Desk & Guide (Click to open)"
+            aria-label="Welcome Desk"
+          />
+          <button
+            type="button"
+            onClick={() => onSelectTab('overview')}
+            className="font-bold text-[14px] tracking-wide text-[#0F172A] hover:text-[#2563EB] transition-colors focus:outline-none cursor-pointer"
           >
-            <span>Welcome Desk</span>
-            <span className="text-[10px]">↗</span>
+            VERIDOC AI
           </button>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="hidden md:flex items-center gap-7 h-full">
+        {/* Navigation Links (Desktop) */}
+        <nav className="hidden xl:flex items-center gap-5 h-full">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
@@ -154,7 +150,7 @@ export default function Header({
                 onClick={() => onSelectTab(item.id)}
                 className={`h-full flex items-center text-[13px] transition-colors border-b-2 font-medium ${
                   isActive
-                    ? 'text-[#0F172A] border-[#0F172A] font-semibold'
+                    ? 'text-[#0F172A] border-[#2563EB] font-semibold text-[#2563EB]'
                     : 'text-[#64748B] border-transparent hover:text-[#0F172A]'
                 }`}
               >
@@ -163,6 +159,21 @@ export default function Header({
             );
           })}
         </nav>
+
+        {/* Navigation Selector for Tablet & Smaller Viewports */}
+        <div className="flex xl:hidden items-center">
+          <select
+            value={activeTab}
+            onChange={(e) => onSelectTab(e.target.value)}
+            className="bg-[#F8FAFC] border border-[#CBD5E1] text-[12px] font-medium text-[#0F172A] rounded-md px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+          >
+            {navItems.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Search & Officer Profile */}
         <div className="flex items-center gap-4 shrink-0">

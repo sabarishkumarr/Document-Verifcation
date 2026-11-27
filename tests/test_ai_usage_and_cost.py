@@ -169,12 +169,13 @@ def test_api_reports_summary_includes_ai_usage(test_client):
 
 def test_verify_gemini_model_real_request():
     """Requirement 11: Verify configured model against real API request."""
+    from backend.config import Config
     extractor = AIDocumentExtractor()
     if extractor.is_configured():
         result = extractor.verify_model_support()
         assert result["configured"] is True
         assert result["supported"] is True
-        assert result["model"] == "gemini-3.5-flash-lite"
+        assert result["model"] == Config.GEMINI_MODEL
         assert result["usage_metadata_available"] is True
 
 
@@ -211,3 +212,31 @@ def test_extract_from_file_captures_usage_metadata_and_cost(monkeypatch, tmp_pat
     # Expected cost: (800 * 0.075 / 1M) + (200 * 0.300 / 1M) = 0.00006 + 0.00006 = 0.000120
     assert meta["estimated_cost"] == 0.00012
     assert meta["cost_available"] is True
+
+
+def test_gemini_retry_on_transient_errors(monkeypatch):
+    """Verify _call_with_retry recovers from 503/429 and does not retry permanent 400 errors."""
+    import time as _time
+    monkeypatch.setattr(_time, "sleep", lambda _: None)
+    extractor = AIDocumentExtractor(provider="gemini", api_key="dummy_key")
+
+    # 1. Transient 503 then success
+    attempts = {"count": 0}
+    def flaky_call():
+        attempts["count"] += 1
+        if attempts["count"] < 3:
+            raise RuntimeError("503 UNAVAILABLE")
+        return "OK"
+
+    assert extractor._call_with_retry(flaky_call, max_retries=3, base_delay=0.01) == "OK"
+    assert attempts["count"] == 3
+
+    # 2. Permanent 400 error should not retry
+    perm_attempts = {"count": 0}
+    def perm_fail():
+        perm_attempts["count"] += 1
+        raise RuntimeError("400 INVALID_ARGUMENT: bad request")
+
+    with pytest.raises(RuntimeError, match="400 INVALID_ARGUMENT"):
+        extractor._call_with_retry(perm_fail, max_retries=3, base_delay=0.01)
+    assert perm_attempts["count"] == 1

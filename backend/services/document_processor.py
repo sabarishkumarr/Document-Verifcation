@@ -9,12 +9,14 @@ from backend.utils.helpers import calculate_sha256, sanitize_filename
 from backend.database.db import (
     insert_document,
     get_document,
+    get_document_type,
     get_documents_by_applicant,
     update_document_extraction,
     update_document_processing_results,
+    insert_extracted_attributes_batch,
 )
 from backend.services.image_preprocessor import ImagePreprocessor
-from backend.services.text_extractor import TextExtractor
+from backend.services.text_extractor import TextExtractor, find_text_bounding_box
 from backend.services.classifier import DocumentClassifier
 from backend.services.field_extractor import FieldExtractor
 from backend.services.validator import DocumentValidator
@@ -68,18 +70,20 @@ class DocumentProcessor:
             api_key=ai_api_key,
             model=ai_model,
             timeout=ai_timeout,
-            enabled=ai_enabled
+            enabled=ai_enabled,
+            db_path=self.db_path
         )
 
     def save_and_register_document(
         self,
         file_storage: FileStorage,
         applicant_id: Optional[str] = None,
-        mime_type: Optional[str] = None
+        mime_type: Optional[str] = None,
+        document_type: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Save an uploaded document to storage/uploads/, compute its hash,
-        and register it in the SQLite database.
+        and register it in the SQLite/PostgreSQL database.
         """
         doc_id = str(uuid.uuid4())
         raw_filename = file_storage.filename or "unnamed_document"
@@ -118,12 +122,16 @@ class DocumentProcessor:
                 doc_dict["duplicate_detected"] = True
                 return doc_dict
 
+        clean_doc_type = "unknown"
+        if document_type and document_type.lower().strip() not in ("auto", "ai_identify", "unknown", ""):
+            clean_doc_type = document_type.lower().strip()
+
         doc_record = {
             "id": doc_id,
             "applicant_id": applicant_id,
             "original_filename": raw_filename,
             "stored_filename": stored_filename,
-            "document_type": "unknown",
+            "document_type": clean_doc_type,
             "file_size": file_size,
             "file_hash": file_hash,
             "mime_type": mime_type or "application/octet-stream",
@@ -213,26 +221,73 @@ class DocumentProcessor:
         5. Deterministic Validation: Python ID format, mandatory field, expiry & consistency checks.
         6. Cross-Document Verification: RapidFuzz applicant comparison.
         """
-        # Step 1: Text Extraction (Digital PDF or Local OCR fallback)
-        extraction = self.extract_document_text(document_id)
-        raw_text = extraction.get("full_text", "")
-
+        # Step 1: AI-First Multimodal Classification (No Tesseract/PyMuPDF text extraction or regex classification)
         doc = get_document(document_id, db_path=self.db_path)
         stored_file_path = self.upload_folder / doc["stored_filename"] if doc else None
+        raw_text = ""
+        extraction = {
+            "extraction_method": "ai_multimodal",
+            "full_text": "",
+            "applicant_id": doc.get("applicant_id") if doc else None,
+            "page_count": 1,
+        }
 
-        # Step 2: Hybrid AI Multimodal Extraction Attempt
+        specified_doc_type = doc.get("document_type") if doc and doc.get("document_type") not in ("unknown", "auto", "ai_identify", "") else None
+        cls_result = None
+        if specified_doc_type:
+            cand_type = specified_doc_type
+            cls_confidence = 1.0
+        elif self.ai_extractor.is_configured() and stored_file_path and stored_file_path.exists():
+            cls_result = self.ai_extractor.classify_document(
+                file_path=stored_file_path,
+                mime_type=doc.get("mime_type") if doc else None,
+                original_filename=doc.get("original_filename") if doc else None,
+                document_id=document_id,
+                applicant_id=doc.get("applicant_id") if doc else None
+            )
+            cand_type = cls_result.get("document_type", "unknown") if cls_result.get("success") else "unknown"
+            cls_confidence = float(cls_result.get("confidence", 0.0)) if cls_result.get("success") else 0.0
+        else:
+            cand_type = "unknown"
+            cls_confidence = 0.0
+
+        # Step 2: Unknown / Unsupported / Unreadable Gate (Stop extraction before schema loading)
+        if cand_type == "unknown" or (cls_result and cls_result.get("success") and not cls_result.get("is_readable", True)):
+            update_document_processing_results(
+                document_id=document_id,
+                classified_type="unknown",
+                classification_confidence=cls_confidence,
+                extracted_fields_json=json.dumps({"classification_metadata": cls_result} if cls_result else {}),
+                validation_results_json=json.dumps({"is_valid": False, "flags": ["Document is unknown, unsupported, or unreadable; sent for human review."]}),
+                processing_status="completed",
+                review_status="manual_review",
+                db_path=self.db_path
+            )
+            return {
+                "document_id": document_id,
+                "classified_type": "unknown",
+                "classification_confidence": cls_confidence,
+                "extraction_strategy": "ai_multimodal_classification_only",
+                "review_status": "manual_review",
+                "message": "Document classified as unknown/unreadable; stopped before schema extraction."
+            }
+
+        from backend.services.schema_learner import SchemaLearner
+        active_schema = SchemaLearner.get_active_schema(cand_type, db_path=self.db_path)
+
+        # Step 3: Schema-Driven AI Multimodal Extraction
         ai_result = None
-        extraction_strategy = "local_rule_extraction"
-
+        extraction_strategy = "ai_multimodal"
         if self.ai_extractor.is_configured() and stored_file_path and stored_file_path.exists():
-            app_id_for_log = extraction.get("applicant_id") or (doc.get("applicant_id") if doc else None)
+            app_id_for_log = doc.get("applicant_id") if doc else None
             ai_result = self.ai_extractor.extract_from_file(
                 file_path=stored_file_path,
                 mime_type=doc.get("mime_type") if doc else None,
                 original_filename=doc.get("original_filename") if doc else None,
-                preextracted_text=raw_text,
+                preextracted_text=None,
                 document_id=document_id,
-                applicant_id=app_id_for_log
+                applicant_id=app_id_for_log,
+                learned_schema=active_schema
             )
 
         if ai_result and ai_result.get("success") and ai_result.get("fields"):
@@ -242,35 +297,91 @@ class DocumentProcessor:
             ai_doc_type = ai_fields.get("document_type")
 
             # Validate / correlate with local text classifier if digital text exists
-            local_classification = DocumentClassifier.classify(raw_text) if raw_text else None
-            if ai_doc_type and ai_doc_type != "unknown":
+            local_classification = DocumentClassifier.classify(raw_text, db_path=self.db_path) if raw_text else None
+            if specified_doc_type:
+                classified_type = specified_doc_type
+                confidence = 1.0
+                dt_info = get_document_type(specified_doc_type, db_path=self.db_path) or {}
+                classification = {
+                    "classified_type": classified_type,
+                    "confidence": confidence,
+                    "display_name": dt_info.get("display_name", classified_type.replace("_", " ").title()),
+                    "category": dt_info.get("category", "general"),
+                    "provider": self.ai_extractor.provider,
+                    "scores": local_classification.get("scores") if local_classification else {},
+                    "matched_keywords": local_classification.get("matched_keywords") if local_classification else [],
+                    "matched_patterns": local_classification.get("matched_patterns") if local_classification else [],
+                    "is_user_specified": True
+                }
+            elif ai_doc_type and ai_doc_type != "unknown":
                 classified_type = ai_doc_type
                 confidence = ai_fields.get("field_confidence", {}).get("document_type", 0.95)
+                classification = {
+                    "classified_type": classified_type,
+                    "confidence": confidence,
+                    "display_name": local_classification.get("display_name") if local_classification else classified_type.replace("_", " ").title(),
+                    "category": local_classification.get("category") if local_classification else "general",
+                    "provider": self.ai_extractor.provider,
+                    "scores": local_classification.get("scores") if local_classification else {},
+                    "matched_keywords": local_classification.get("matched_keywords") if local_classification else [],
+                    "matched_patterns": local_classification.get("matched_patterns") if local_classification else [],
+                    "is_user_specified": False
+                }
             elif local_classification and local_classification["classified_type"] != "unknown":
                 classified_type = local_classification["classified_type"]
                 confidence = local_classification["confidence"]
+                classification = {
+                    "classified_type": classified_type,
+                    "confidence": confidence,
+                    "display_name": local_classification.get("display_name", classified_type.replace("_", " ").title()),
+                    "category": local_classification.get("category", "general"),
+                    "provider": self.ai_extractor.provider,
+                    "scores": local_classification.get("scores", {}),
+                    "matched_keywords": local_classification.get("matched_keywords", []),
+                    "matched_patterns": local_classification.get("matched_patterns", []),
+                    "is_user_specified": False
+                }
             else:
                 classified_type = "unknown"
                 confidence = 0.0
-
-            classification = {
-                "classified_type": classified_type,
-                "confidence": confidence,
-                "provider": self.ai_extractor.provider,
-                "scores": local_classification.get("scores") if local_classification else {},
-                "matched_keywords": local_classification.get("matched_keywords") if local_classification else [],
-                "matched_patterns": local_classification.get("matched_patterns") if local_classification else []
-            }
+                classification = {
+                    "classified_type": classified_type,
+                    "confidence": confidence,
+                    "display_name": "Unknown",
+                    "category": "general",
+                    "provider": self.ai_extractor.provider,
+                    "scores": {},
+                    "matched_keywords": [],
+                    "matched_patterns": [],
+                    "is_user_specified": False
+                }
             extracted_fields = ai_fields
 
         else:
             # Fallback to local rule-based classification and field extraction
             # Local operations (PyMuPDF, Tesseract OCR, OpenCV, regex) do NOT create Gemini usage logs or charges
             extraction_strategy = "local_rule_extraction"
-            classification = DocumentClassifier.classify(raw_text)
-            classified_type = classification["classified_type"]
-            confidence = classification["confidence"]
-            extracted_fields = FieldExtractor.extract_fields(raw_text, document_type=classified_type)
+            local_cls = DocumentClassifier.classify(raw_text, db_path=self.db_path)
+            if specified_doc_type:
+                classified_type = specified_doc_type
+                confidence = 1.0
+                dt_info = get_document_type(specified_doc_type, db_path=self.db_path) or {}
+                classification = {
+                    "classified_type": classified_type,
+                    "confidence": confidence,
+                    "display_name": dt_info.get("display_name", classified_type.replace("_", " ").title()),
+                    "category": dt_info.get("category", "general"),
+                    "matched_keywords": local_cls.get("matched_keywords", []),
+                    "matched_patterns": local_cls.get("matched_patterns", []),
+                    "scores": local_cls.get("scores", {}),
+                    "is_user_specified": True
+                }
+            else:
+                classification = local_cls
+                classified_type = classification["classified_type"]
+                confidence = classification["confidence"]
+                classification["is_user_specified"] = False
+            extracted_fields = FieldExtractor.extract_fields(raw_text, document_type=classified_type, learned_schema=active_schema)
 
             # Ensure consistent output schema for local fallback
             if "applicant_name" not in extracted_fields:
@@ -297,9 +408,87 @@ class DocumentProcessor:
                     "notes": "Extracted via local PyMuPDF / Tesseract rule pipeline."
                 }
             if "manual_review_required" not in extracted_fields:
-                extracted_fields["manual_review_required"] = (
-                    not extracted_fields.get("name") or not extracted_fields.get("id_number")
-                )
+                is_kyc = classified_type in ("pan", "aadhaar", "passport", "voter_id", "driving_licence")
+                if is_kyc:
+                    extracted_fields["manual_review_required"] = (
+                        not extracted_fields.get("name") or not extracted_fields.get("id_number")
+                    )
+                else:
+                    extracted_fields["manual_review_required"] = False
+
+        # Ensure normalized attributes list is populated for both AI and local pipelines
+        if not extracted_fields.get("attributes"):
+            local_attributes = []
+            seen_keys = set()
+            for f_key, f_lbl, f_dtype in [
+                ("name", "Applicant Name", "string"),
+                ("applicant_name", "Applicant Name", "string"),
+                ("id_number", "Identification Number", "string"),
+                ("identification_number", "Identification Number", "string"),
+                ("dob", "Date of Birth", "date"),
+                ("date_of_birth", "Date of Birth", "date"),
+                ("gender", "Gender", "string"),
+                ("father_name", "Father's Name", "string"),
+                ("expiry_date", "Expiry Date", "date"),
+            ]:
+                val = extracted_fields.get(f_key)
+                if val and f_key not in seen_keys:
+                    local_attributes.append({
+                        "attribute_key": f_key,
+                        "display_label": f_lbl,
+                        "attribute_value": str(val),
+                        "data_type": f_dtype,
+                        "confidence_score": 0.88,
+                        "bounding_box": None,
+                        "page_number": 1,
+                        "provenance": extraction_strategy,
+                        "is_custom": False
+                    })
+                    seen_keys.add(f_key)
+
+            extra = extracted_fields.get("extra_fields", {})
+            if isinstance(extra, dict):
+                for e_key, e_val in extra.items():
+                    if e_val and e_key not in seen_keys and isinstance(e_val, (str, int, float)):
+                        dtype = "currency" if any(cur in e_key for cur in ["salary", "amount", "balance", "total", "pay"]) else "string"
+                        local_attributes.append({
+                            "attribute_key": e_key,
+                            "display_label": e_key.replace("_", " ").title(),
+                            "attribute_value": str(e_val),
+                            "data_type": dtype,
+                            "confidence_score": 0.85,
+                            "bounding_box": None,
+                            "page_number": 1,
+                            "provenance": extraction_strategy,
+                            "is_custom": False
+                        })
+                        seen_keys.add(e_key)
+
+            extracted_fields["attributes"] = local_attributes
+
+        # Resolve spatial bounding boxes for extracted attributes against spatial_tokens
+        spatial_tokens = extraction.get("spatial_tokens", [])
+        attributes_list = extracted_fields.get("attributes", [])
+        if attributes_list and spatial_tokens:
+            for attr in attributes_list:
+                if not attr.get("bounding_box"):
+                    val_to_find = attr.get("attribute_value")
+                    p_num = attr.get("page_number", 1)
+                    found_bbox = find_text_bounding_box(val_to_find, spatial_tokens, page_number=p_num)
+                    if found_bbox and len(found_bbox) == 4:
+                        attr["bounding_box"] = {
+                            "ymin": found_bbox[0],
+                            "xmin": found_bbox[1],
+                            "ymax": found_bbox[2],
+                            "xmax": found_bbox[3]
+                        }
+
+        # Persist normalized attributes into document_extracted_attributes table
+        if attributes_list:
+            try:
+                insert_extracted_attributes_batch(document_id, attributes_list, db_path=self.db_path)
+            except Exception as batch_exc:
+                logger.warning(f"Could not persist extracted attributes to DB: {batch_exc}")
 
         # Step 3: Rule Validation & Expiry Checking (ALWAYS executed deterministically in Python)
         validation = DocumentValidator.validate(classified_type, extracted_fields, raw_text=raw_text)
@@ -359,6 +548,11 @@ class DocumentProcessor:
             )
             from backend.database.db import recompute_applicant_status
             recompute_applicant_status(applicant_id, db_path=self.db_path)
+
+        # Check if type is unknown or unregistered
+        is_unregistered = classified_type == "unknown" or get_document_type(classified_type, db_path=self.db_path) is None
+        classification["is_unregistered_type"] = is_unregistered
+        classification["suggest_register_type"] = is_unregistered
 
         return {
             "document_id": document_id,

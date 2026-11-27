@@ -144,16 +144,11 @@ export default function ApplicantsView({ onNavigateToQueue, initialApplicantId }
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div>
-          <div className="flex items-center gap-2 mb-1.5 text-[12px] font-semibold tracking-wide">
-            <span className="text-[#64748B] uppercase tracking-wider">Directory</span>
-            <span className="text-[#CBD5E1]">/</span>
-            <span className="text-[#2563EB]">Loan Applicants</span>
-          </div>
-          <h1 className="font-serif text-[38px] font-bold text-[#0F172A] leading-tight">
-            Applicant Profiles<span className="text-[#2563EB]">.</span>
+          <h1 className="text-[20px] font-bold text-[#0F172A] tracking-tight leading-tight">
+            Applicants
           </h1>
-          <p className="text-[15px] text-[#64748B]">
-            All registered housing finance loan applicants and their cross-document identity verification records.
+          <p className="text-[13px] text-[#64748B] mt-0.5">
+            Searchable applicant directory and consolidated document verification records.
           </p>
         </div>
 

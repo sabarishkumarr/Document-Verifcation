@@ -3,15 +3,18 @@ import Header from './Components/Header';
 import WelcomeView from './Components/WelcomeView';
 import DashboardView from './Components/DashboardView';
 import UploadView from './Components/UploadView';
-import VerificationQueueView from './Components/VerificationQueueView';
-import ApplicantsView from './Components/ApplicantsView';
+import VerificationView from './Components/VerificationView';
 import ReportsView from './Components/ReportsView';
+import RepositoryView from './Components/RepositoryView';
+import TriangulationView from './Components/TriangulationView';
+import WelcomeDrawer from './Components/WelcomeDrawer';
 
 export default function App() {
-  // Default landing view is 'welcome' as requested by Stitch specifications
-  const [activeTab, setActiveTab] = useState('welcome');
+  // Operational workspace landing
+  const [activeTab, setActiveTab] = useState('overview');
   const [queueDocId, setQueueDocId] = useState(null);
   const [applicantId, setApplicantId] = useState(null);
+  const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
 
   // Review Officer name persisted in localStorage
   const [officerName, setOfficerName] = useState(() => {
@@ -23,14 +26,18 @@ export default function App() {
     localStorage.setItem('veridoc_officer_name', newName);
   };
 
+  const handleToggleWelcome = () => {
+    setIsWelcomeOpen((prev) => !prev);
+  };
+
   const handleNavigateToQueue = (docId = null) => {
     setQueueDocId(docId);
-    setActiveTab('queue');
+    setActiveTab('verification');
   };
 
   const handleNavigateToApplicant = (targetApplicantId) => {
     setApplicantId(targetApplicantId);
-    setActiveTab('applicants');
+    setActiveTab('verification');
   };
 
   const handleNavigateToUpload = () => {
@@ -38,24 +45,13 @@ export default function App() {
   };
 
   const handleNavigateToWelcome = () => {
-    setActiveTab('welcome');
+    setIsWelcomeOpen(true);
   };
 
-  // 1. Initial Landing Page: Stitch Welcome Component
-  if (activeTab === 'welcome') {
-    return (
-      <WelcomeView
-        officerName={officerName}
-        onEnterWorkspace={() => setActiveTab('overview')}
-      />
-    );
-  }
-
-  // 2. Operational KYC Intelligence Workspace
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-[#0F172A] flex flex-col justify-between font-sans">
       
-      {/* Top Navigation Bar with Search & Profile */}
+      {/* Top Navigation Bar with Search, Blue Dot & Profile */}
       <Header
         activeTab={activeTab}
         onSelectTab={(tab) => {
@@ -67,7 +63,20 @@ export default function App() {
         onUpdateOfficerName={handleUpdateOfficerName}
         onNavigateToDocument={handleNavigateToQueue}
         onNavigateToApplicant={handleNavigateToApplicant}
-        onNavigateToWelcome={handleNavigateToWelcome}
+        onToggleWelcome={handleToggleWelcome}
+      />
+
+      {/* Slide-over Welcome Desk Drawer */}
+      <WelcomeDrawer
+        isOpen={isWelcomeOpen}
+        onClose={() => setIsWelcomeOpen(false)}
+        officerName={officerName}
+        onUpdateOfficerName={handleUpdateOfficerName}
+        onNavigateTab={(tab) => {
+          setActiveTab(tab);
+          if (tab !== 'queue') setQueueDocId(null);
+          if (tab !== 'applicants') setApplicantId(null);
+        }}
       />
 
       {/* Main Workspace Views */}
@@ -79,24 +88,31 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'repository' && (
+          <RepositoryView
+            onNavigateToUpload={handleNavigateToUpload}
+          />
+        )}
+
         {activeTab === 'upload' && (
           <UploadView
             onNavigateToQueue={handleNavigateToQueue}
           />
         )}
 
-        {activeTab === 'queue' && (
-          <VerificationQueueView
-            initialApplicantId={queueDocId}
+        {(activeTab === 'verification' || activeTab === 'queue' || activeTab === 'applicants') && (
+          <VerificationView
+            initialApplicantId={applicantId || queueDocId}
             initialDocId={queueDocId}
             officerName={officerName}
           />
         )}
 
-        {activeTab === 'applicants' && (
-          <ApplicantsView
+        {activeTab === 'triangulation' && (
+          <TriangulationView
             initialApplicantId={applicantId}
             onNavigateToQueue={handleNavigateToQueue}
+            onNavigateToUpload={handleNavigateToUpload}
           />
         )}
 

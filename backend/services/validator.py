@@ -40,39 +40,42 @@ class DocumentValidator:
         checks: List[Dict[str, Any]] = []
         flags: List[str] = []
 
-        # 1. Mandatory Fields Check
-        name = extracted_fields.get("name")
-        if name and len(name.strip()) >= 3:
-            checks.append({
-                "field": "name",
-                "status": "pass",
-                "message": f"Mandatory field 'name' found: '{name}'"
-            })
-        else:
-            checks.append({
-                "field": "name",
-                "status": "fail",
-                "message": "Applicant name could not be identified or is incomplete"
-            })
-            flags.append("Missing applicant name")
+        is_kyc = document_type in ("pan", "aadhaar", "passport", "voter_id", "driving_licence")
 
-        dob = extracted_fields.get("dob")
-        if dob:
-            # Validate age
-            age_check = cls._validate_dob(dob)
-            checks.append(age_check)
-            if age_check["status"] == "fail":
-                flags.append(age_check["message"])
-        else:
-            checks.append({
-                "field": "dob",
-                "status": "warning",
-                "message": "Date of Birth not clearly identified on document"
-            })
-            flags.append("Missing Date of Birth")
+        if is_kyc:
+            # 1. Mandatory Fields Check for KYC identity documents
+            name = extracted_fields.get("name")
+            if name and len(name.strip()) >= 3:
+                checks.append({
+                    "field": "name",
+                    "status": "pass",
+                    "message": f"Mandatory field 'name' found: '{name}'"
+                })
+            else:
+                checks.append({
+                    "field": "name",
+                    "status": "fail",
+                    "message": "Applicant name could not be identified or is incomplete"
+                })
+                flags.append("Missing applicant name")
 
-        # 2. Document-Specific Format Validations
-        id_number = extracted_fields.get("id_number")
+            dob = extracted_fields.get("dob")
+            if dob:
+                # Validate age
+                age_check = cls._validate_dob(dob)
+                checks.append(age_check)
+                if age_check["status"] == "fail":
+                    flags.append(age_check["message"])
+            else:
+                checks.append({
+                    "field": "dob",
+                    "status": "warning",
+                    "message": "Date of Birth not clearly identified on document"
+                })
+                flags.append("Missing Date of Birth")
+
+            # 2. Document-Specific Format Validations for KYC
+            id_number = extracted_fields.get("id_number")
         if document_type == "pan":
             pan_check = cls._validate_pan(id_number, extracted_fields)
             checks.append(pan_check)
@@ -149,13 +152,84 @@ class DocumentValidator:
             if exp_check["status"] == "fail":
                 flags.append(exp_check["message"])
 
+        elif document_type == "salary_slip":
+            # Salary Slip Validations
+            name = extracted_fields.get("name") or extracted_fields.get("applicant_name")
+            if name:
+                checks.append({"field": "employee_name", "status": "pass", "message": f"Employee name identified: '{name}'"})
+            else:
+                checks.append({"field": "employee_name", "status": "warning", "message": "Employee name not clearly identified"})
+
+            extra = extracted_fields.get("extra_fields", {})
+            net = extra.get("net_salary")
+            if net:
+                try:
+                    net_float = float(str(net).replace(",", ""))
+                    if net_float > 0:
+                        checks.append({"field": "net_salary", "status": "pass", "message": f"Valid net salary amount: {net}"})
+                    else:
+                        checks.append({"field": "net_salary", "status": "fail", "message": f"Invalid net salary: {net}"})
+                        flags.append("Invalid net salary amount")
+                except ValueError:
+                    checks.append({"field": "net_salary", "status": "warning", "message": f"Net salary format ambiguous: {net}"})
+            else:
+                checks.append({"field": "net_salary", "status": "warning", "message": "Net salary amount not identified"})
+
+        elif document_type == "bank_statement":
+            # Bank Statement Validations
+            id_num = extracted_fields.get("id_number") or extracted_fields.get("extra_fields", {}).get("account_number")
+            if id_num and len(re.sub(r"\D", "", str(id_num))) >= 9:
+                checks.append({"field": "account_number", "status": "pass", "message": f"Bank account number identified: {id_num}"})
+            else:
+                checks.append({"field": "account_number", "status": "warning", "message": "Bank account number missing or incomplete"})
+
+            ifsc = extracted_fields.get("extra_fields", {}).get("ifsc_code")
+            if ifsc:
+                if re.match(r"^[A-Z]{4}0[A-Z0-9]{6}$", str(ifsc).strip().upper()):
+                    checks.append({"field": "ifsc_code", "status": "pass", "message": f"Valid 11-character IFSC code: {ifsc}"})
+                else:
+                    checks.append({"field": "ifsc_code", "status": "fail", "message": f"Invalid IFSC code format: {ifsc}"})
+                    flags.append("Invalid IFSC code format")
+
+        elif document_type == "commercial_invoice":
+            # Commercial Invoice Validations
+            inv_no = extracted_fields.get("id_number") or extracted_fields.get("extra_fields", {}).get("invoice_number")
+            if inv_no:
+                checks.append({"field": "invoice_number", "status": "pass", "message": f"Invoice number identified: {inv_no}"})
+            else:
+                checks.append({"field": "invoice_number", "status": "warning", "message": "Invoice number not identified"})
+
+            tot = extracted_fields.get("extra_fields", {}).get("total_amount")
+            if tot:
+                try:
+                    tot_float = float(str(tot).replace(",", ""))
+                    checks.append({"field": "total_amount", "status": "pass", "message": f"Total amount identified: {tot}"})
+                except ValueError:
+                    checks.append({"field": "total_amount", "status": "warning", "message": f"Total amount format ambiguous: {tot}"})
+
+        elif document_type == "tax_form_16":
+            # Form 16 Validations
+            pan_val = extracted_fields.get("id_number") or extracted_fields.get("extra_fields", {}).get("pan")
+            if pan_val and re.match(r"^[A-Z]{5}[0-9]{4}[A-Z]$", str(pan_val).strip().upper()):
+                checks.append({"field": "pan", "status": "pass", "message": f"Valid employee PAN identified: {pan_val}"})
+            else:
+                checks.append({"field": "pan", "status": "warning", "message": "Employee PAN missing or invalid in Form 16"})
+
+        elif document_type == "utility_bill":
+            # Utility Bill Validations
+            c_no = extracted_fields.get("id_number") or extracted_fields.get("extra_fields", {}).get("consumer_number")
+            if c_no:
+                checks.append({"field": "consumer_number", "status": "pass", "message": f"Consumer identifier found: {c_no}"})
+            else:
+                checks.append({"field": "consumer_number", "status": "warning", "message": "Consumer / Meter number not identified"})
+
         else:
             checks.append({
                 "field": "document_type",
                 "status": "warning",
-                "message": "Unclassified document type; generic validation applied"
+                "message": f"Document classified as '{document_type}'; generic validation applied"
             })
-            flags.append("Unclassified document type")
+            flags.append(f"Document type '{document_type}' uses generic schema")
 
         # Compute overall status
         has_fail = any(c["status"] == "fail" for c in checks)

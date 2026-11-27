@@ -80,9 +80,14 @@ class FieldExtractor:
     DL_REGEX = re.compile(r"\b([A-Z]{2}[-\s]?[0-9]{2}[-\s]?[0-9]{11})\b")
 
     @classmethod
-    def extract_fields(cls, text: str, document_type: str = "unknown") -> Dict[str, Any]:
+    def extract_fields(
+        cls,
+        text: str,
+        document_type: str = "unknown",
+        learned_schema: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
-        Extract structured fields tailored to the document type.
+        Extract structured fields tailored to the document type, augmented by versioned learned schemas.
         """
         if not text:
             return {}
@@ -146,6 +151,16 @@ class FieldExtractor:
             cls._extract_voter_fields(text, lines, fields)
         elif document_type == "driving_licence":
             cls._extract_dl_fields(text, lines, fields)
+        elif document_type == "salary_slip":
+            cls._extract_salary_fields(text, lines, fields)
+        elif document_type == "bank_statement":
+            cls._extract_bank_fields(text, lines, fields)
+        elif document_type == "commercial_invoice":
+            cls._extract_invoice_fields(text, lines, fields)
+        elif document_type == "tax_form_16":
+            cls._extract_tax16_fields(text, lines, fields)
+        elif document_type == "utility_bill":
+            cls._extract_utility_fields(text, lines, fields)
         else:
             # Try to auto-detect ID number if type is generic or unknown
             cls._extract_generic_id(text, fields)
@@ -156,6 +171,50 @@ class FieldExtractor:
 
         # 4. Field Normalization & Sanitization
         cls._normalize_fields(fields, document_type)
+
+        # 5. In-Context Learned Schema Matching (Anchors & Regex Patterns)
+        if learned_schema:
+            anchors = learned_schema.get("anchor_phrases", {})
+            regexes = learned_schema.get("regex_patterns", {})
+            attr_defs = learned_schema.get("attribute_definitions", [])
+
+            extra_attrs = fields.get("extra_fields", {}).setdefault("attributes", [])
+            existing_keys = {a.get("attribute_key") for a in extra_attrs if isinstance(a, dict)}
+
+            for attr in attr_defs:
+                key = attr.get("attribute_key")
+                if not key or key in existing_keys:
+                    continue
+                val = None
+                # Check regex
+                rx_pat = regexes.get(key) or attr.get("regex_pattern")
+                if rx_pat:
+                    try:
+                        m = re.search(rx_pat, text)
+                        if m:
+                            val = m.group(0).strip()
+                    except Exception:
+                        pass
+                # Check anchor phrases
+                if not val and key in anchors:
+                    for anchor in anchors[key]:
+                        pattern = re.escape(anchor) + r"\s*([^\n\r]+)"
+                        try:
+                            am = re.search(pattern, text, re.IGNORECASE)
+                            if am:
+                                val = am.group(1).strip()
+                                break
+                        except Exception:
+                            pass
+                if val:
+                    extra_attrs.append({
+                        "attribute_key": key,
+                        "display_label": attr.get("display_label") or key.replace("_", " ").title(),
+                        "attribute_value": val,
+                        "data_type": attr.get("data_type", "string"),
+                        "confidence": 0.95,
+                        "source_type": "learned_schema"
+                    })
 
         return fields
 
@@ -379,6 +438,171 @@ class FieldExtractor:
         val_match = re.search(r"(?:Valid Till|Validity|Expires|NT)[\s\:\-]+([0-3]?[0-9][\/\-\.][0-1]?[0-9][\/\-\.][1-2][0-9]{3})", text, re.IGNORECASE)
         if val_match:
             fields["expiry_date"] = parse_date(val_match.group(1))
+
+    @classmethod
+    def _extract_salary_fields(cls, text: str, lines: List[str], fields: Dict[str, Any]) -> None:
+        """Extract fields specific to Salary Slips / Payslips."""
+        # Employee Name
+        name_m = re.search(r"(?:Employee\s*Name|Emp\s*Name|Name)[\s\:\-]+([A-Za-z\s\.]{3,40})", text, re.IGNORECASE)
+        if name_m:
+            fields["name"] = name_m.group(1).split("\n")[0].strip()
+
+        # Employee ID
+        id_m = re.search(r"EMP(?:LOYEE)?\s*ID[\s\:\-]*([A-Z0-9\-]+)", text, re.IGNORECASE)
+        if id_m:
+            fields["id_number"] = id_m.group(1).strip()
+            fields["masked_id"] = mask_id_number(fields["id_number"], 4)
+            fields["extra_fields"]["employee_id"] = fields["id_number"]
+
+        # Net Salary
+        net_m = re.search(r"NET\s*(?:PAY|SALARY)[\s\:\-]*(?:RS\.?|INR)?\s*([\d,]+(?:\.\d{2})?)", text, re.IGNORECASE)
+        if net_m:
+            fields["extra_fields"]["net_salary"] = net_m.group(1).replace(",", "").strip()
+
+        # Gross Salary
+        gross_m = re.search(r"GROSS\s*(?:PAY|SALARY|EARNINGS)?[\s\:\-]*(?:RS\.?|INR)?\s*([\d,]+(?:\.\d{2})?)", text, re.IGNORECASE)
+        if gross_m:
+            fields["extra_fields"]["gross_salary"] = gross_m.group(1).replace(",", "").strip()
+
+        # Basic Pay
+        basic_m = re.search(r"BASIC\s*(?:PAY|SALARY)?[\s\:\-]*(?:RS\.?|INR)?\s*([\d,]+(?:\.\d{2})?)", text, re.IGNORECASE)
+        if basic_m:
+            fields["extra_fields"]["basic_salary"] = basic_m.group(1).replace(",", "").strip()
+
+        # HRA
+        hra_m = re.search(r"(?:HRA|HOUSE\s*RENT\s*ALLOWANCE)[\s\:\-]*(?:RS\.?|INR)?\s*([\d,]+(?:\.\d{2})?)", text, re.IGNORECASE)
+        if hra_m:
+            fields["extra_fields"]["hra"] = hra_m.group(1).replace(",", "").strip()
+
+        # Total Deductions
+        ded_m = re.search(r"(?:TOTAL\s*)?DEDUCTIONS[\s\:\-]*(?:RS\.?|INR)?\s*([\d,]+(?:\.\d{2})?)", text, re.IGNORECASE)
+        if ded_m:
+            fields["extra_fields"]["deductions"] = ded_m.group(1).replace(",", "").strip()
+
+        # Pay Period
+        period_m = re.search(r"(?:PAY\s*PERIOD|MONTH|PAYSLIP\s*FOR)[\s\:\-]*([A-Za-z]+\s*\d{4})", text, re.IGNORECASE)
+        if period_m:
+            fields["extra_fields"]["pay_period"] = period_m.group(1).strip()
+
+    @classmethod
+    def _extract_bank_fields(cls, text: str, lines: List[str], fields: Dict[str, Any]) -> None:
+        """Extract fields specific to Bank Statements."""
+        # Account Holder Name
+        name_m = re.search(r"(?:Account\s*Holder|Customer\s*Name|Name)[\s\:\-]+([A-Za-z\s\.]{3,40})", text, re.IGNORECASE)
+        if name_m:
+            fields["name"] = name_m.group(1).split("\n")[0].strip()
+
+        # Account Number
+        acc_m = re.search(r"ACCOUNT\s*(?:NO|NUMBER)?[\s\:\-]*(\d{9,18})", text, re.IGNORECASE)
+        if acc_m:
+            fields["id_number"] = acc_m.group(1).strip()
+            fields["masked_id"] = mask_id_number(fields["id_number"], 4)
+            fields["extra_fields"]["account_number"] = fields["id_number"]
+
+        # IFSC Code
+        ifsc_m = re.search(r"\b([A-Z]{4}0[A-Z0-9]{6})\b", text)
+        if ifsc_m:
+            fields["extra_fields"]["ifsc_code"] = ifsc_m.group(1).strip()
+
+        # Closing Balance
+        bal_m = re.search(r"(?:CLOSING\s*BALANCE|AVAILABLE\s*BALANCE|BALANCE)[\s\:\-]*(?:RS\.?|INR)?\s*([\d,]+(?:\.\d{2})?)", text, re.IGNORECASE)
+        if bal_m:
+            fields["extra_fields"]["closing_balance"] = bal_m.group(1).replace(",", "").strip()
+
+    @classmethod
+    def _extract_invoice_fields(cls, text: str, lines: List[str], fields: Dict[str, Any]) -> None:
+        """Extract fields specific to Commercial Invoices."""
+        # Invoice Number
+        inv_m = re.search(r"INV(?:OICE)?\s*(?:NO|NUMBER)?[\s\:\-#]*([A-Z0-9\-\/]+)", text, re.IGNORECASE)
+        if inv_m:
+            fields["id_number"] = inv_m.group(1).strip()
+            fields["masked_id"] = fields["id_number"]
+            fields["extra_fields"]["invoice_number"] = fields["id_number"]
+
+        # Bill To Name
+        bill_m = re.search(r"(?:BILL\s*TO|CUSTOMER|BUYER|CLIENT)[\s\:\-]+([A-Za-z\s\.]{3,40})", text, re.IGNORECASE)
+        if bill_m:
+            fields["name"] = bill_m.group(1).split("\n")[0].strip()
+
+        # GSTIN
+        gstin_m = re.search(r"\b(\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1})\b", text)
+        if gstin_m:
+            fields["extra_fields"]["gstin"] = gstin_m.group(1).strip()
+
+        # Total Amount
+        tot_m = re.search(r"(?:TOTAL\s*AMOUNT|GRAND\s*TOTAL|TOTAL)[\s\:\-]*(?:RS\.?|INR|\$)?\s*([\d,]+(?:\.\d{2})?)", text, re.IGNORECASE)
+        if tot_m:
+            fields["extra_fields"]["total_amount"] = tot_m.group(1).replace(",", "").strip()
+
+        # Due Date
+        due_m = re.search(r"DUE\s*DATE[\s\:\-]*([0-3]?[0-9][\/\-\.][0-1]?[0-9][\/\-\.][1-2][0-9]{3})", text, re.IGNORECASE)
+        if due_m:
+            fields["expiry_date"] = parse_date(due_m.group(1))
+
+    @classmethod
+    def _extract_tax16_fields(cls, text: str, lines: List[str], fields: Dict[str, Any]) -> None:
+        """Extract fields specific to Tax Form 16."""
+        # Employee Name
+        name_m = re.search(r"(?:Name\s*of\s*Employee|Employee\s*Name)[\s\:\-]+([A-Za-z\s\.]{3,40})", text, re.IGNORECASE)
+        if name_m:
+            fields["name"] = name_m.group(1).split("\n")[0].strip()
+
+        # PAN of Employee
+        pan_m = re.search(r"PAN\s*(?:of\s*Employee)?[\s\:\-]*([A-Z]{5}[0-9]{4}[A-Z])", text, re.IGNORECASE)
+        if pan_m:
+            fields["id_number"] = pan_m.group(1).strip().upper()
+            fields["masked_id"] = mask_id_number(fields["id_number"], 4)
+            fields["extra_fields"]["pan"] = fields["id_number"]
+
+        # TAN of Deductor
+        tan_m = re.search(r"TAN\s*(?:of\s*Deductor)?[\s\:\-]*([A-Z]{4}\d{5}[A-Z])", text, re.IGNORECASE)
+        if tan_m:
+            fields["extra_fields"]["tan"] = tan_m.group(1).strip().upper()
+
+        # Assessment Year
+        ay_m = re.search(r"ASSESSMENT\s*YEAR[\s\:\-]*(\d{4}[-\s]?\d{2,4})", text, re.IGNORECASE)
+        if ay_m:
+            fields["extra_fields"]["assessment_year"] = ay_m.group(1).strip()
+
+        # Tax Deducted
+        tax_m = re.search(r"(?:TOTAL\s*TAX\s*DEDUCTED|TAX\s*DEDUCTED)[\s\:\-]*(?:RS\.?|INR)?\s*([\d,]+(?:\.\d{2})?)", text, re.IGNORECASE)
+        if tax_m:
+            fields["extra_fields"]["tax_deducted"] = tax_m.group(1).replace(",", "").strip()
+
+    @classmethod
+    def _extract_utility_fields(cls, text: str, lines: List[str], fields: Dict[str, Any]) -> None:
+        """Extract fields specific to Utility Bills."""
+        # Consumer Name
+        name_m = re.search(r"(?:Consumer\s*Name|Customer\s*Name|Name)[\s\:\-]+([A-Za-z\s\.]{3,40})", text, re.IGNORECASE)
+        if name_m:
+            fields["name"] = name_m.group(1).split("\n")[0].strip()
+
+        # Consumer Number
+        c_m = re.search(r"CONSUMER\s*(?:NO|NUMBER|ID)[\s\:\-]*([A-Z0-9\-]+)", text, re.IGNORECASE)
+        if c_m:
+            fields["id_number"] = c_m.group(1).strip()
+            fields["masked_id"] = mask_id_number(fields["id_number"], 4)
+            fields["extra_fields"]["consumer_number"] = fields["id_number"]
+
+        # Meter Number
+        m_m = re.search(r"METER\s*(?:NO|NUMBER)[\s\:\-]*([A-Z0-9\-]+)", text, re.IGNORECASE)
+        if m_m:
+            fields["extra_fields"]["meter_number"] = m_m.group(1).strip()
+
+        # Bill Amount
+        amt_m = re.search(r"(?:BILL\s*AMOUNT|AMOUNT\s*PAYABLE|TOTAL\s*AMOUNT)[\s\:\-]*(?:RS\.?|INR)?\s*([\d,]+(?:\.\d{2})?)", text, re.IGNORECASE)
+        if amt_m:
+            fields["extra_fields"]["bill_amount"] = amt_m.group(1).replace(",", "").strip()
+
+        # Units Consumed
+        unit_m = re.search(r"UNITS\s*(?:CONSUMED)?[\s\:\-]*(\d+(?:\.\d+)?)", text, re.IGNORECASE)
+        if unit_m:
+            fields["extra_fields"]["units_consumed"] = unit_m.group(1).strip()
+
+        # Due Date
+        due_m = re.search(r"DUE\s*DATE[\s\:\-]*([0-3]?[0-9][\/\-\.][0-1]?[0-9][\/\-\.][1-2][0-9]{3})", text, re.IGNORECASE)
+        if due_m:
+            fields["expiry_date"] = parse_date(due_m.group(1))
 
     @classmethod
     def _extract_generic_id(cls, text: str, fields: Dict[str, Any]) -> None:

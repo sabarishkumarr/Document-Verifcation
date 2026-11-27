@@ -1,19 +1,34 @@
-/* Global reset */
+/* Global reset & typography */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* Main document styling */
 body {
-  font-family: Arial, Helvetica, sans-serif;
-  background-color: #f5f7fb;
-  color: #1e293b;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #F8FAFC;
+  color: #0F172A;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Remove default button font differences */
 button {
   font-family: inherit;
+}
+
+/* Custom compact scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }

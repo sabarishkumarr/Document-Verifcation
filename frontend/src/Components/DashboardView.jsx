@@ -16,7 +16,7 @@ export default function DashboardView({ onNavigateToUpload, onNavigateToQueue })
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getDashboardStats('all');
+      const res = await api.getDashboardStats('live');
       setStats(res.data);
     } catch (err) {
       setError(err.message || 'Failed to load dashboard statistics.');
@@ -119,35 +119,31 @@ export default function DashboardView({ onNavigateToUpload, onNavigateToQueue })
     <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 py-8 space-y-10">
       
       {/* 1. Dashboard Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#2563EB]"></span>
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[#2563EB]">OPERATIONAL OVERVIEW</span>
-          </div>
-          <h1 className="font-serif text-[38px] font-bold text-[#0F172A] tracking-tight leading-tight">
-            Document Intelligence Overview<span className="text-[#2563EB]">.</span>
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
+        <div>
+          <h1 className="text-[20px] font-bold text-[#0F172A] tracking-tight">
+            Overview
           </h1>
-          <p className="text-[15px] text-[#64748B]">
-            Automated KYC intake, classification, and discrepancy monitoring for housing finance applicants.
+          <p className="text-[13px] text-[#64748B] mt-0.5">
+            Operational processing summary, verification attention items, and recent documents.
           </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={loadStats}
-            className="inline-flex items-center gap-2 bg-white border border-[#E2E8F0] text-[#0F172A] px-4 py-2 rounded-lg text-[13px] font-medium hover:bg-[#F8FAFC] transition-colors shadow-xs"
+            className="inline-flex items-center gap-2 bg-white border border-[#CBD5E1] text-[#334155] px-3.5 py-2 rounded-lg text-[13px] font-semibold hover:bg-slate-50 transition-colors shadow-2xs"
             type="button"
           >
             <span className="material-symbols-outlined text-[17px] text-[#64748B]">refresh</span>
-            Refresh Stats
+            Refresh
           </button>
           <button
             onClick={onNavigateToUpload}
-            className="inline-flex items-center gap-2 bg-[#0F172A] hover:bg-[#1E293B] text-white px-5 py-2 rounded-lg text-[13px] font-medium tracking-wide transition-colors shadow-xs"
+            className="inline-flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-2xs"
             type="button"
           >
-            <span className="material-symbols-outlined text-[17px]">add</span>
+            <span>+</span>
             Upload Documents
           </button>
         </div>
@@ -233,7 +229,7 @@ export default function DashboardView({ onNavigateToUpload, onNavigateToQueue })
       <section aria-labelledby="attention-heading" className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h2 id="attention-heading" className="font-serif text-[24px] font-bold text-[#0F172A]">
+            <h2 id="attention-heading" className="text-[16px] font-bold text-[#0F172A]">
               Requires attention
             </h2>
             <span className="px-2.5 py-0.5 rounded text-[12px] font-semibold bg-[#F9EFEB] text-[#8C3B30]">
@@ -321,7 +317,7 @@ export default function DashboardView({ onNavigateToUpload, onNavigateToQueue })
       {/* 4. Recent Documents Section */}
       <section aria-labelledby="recent-heading" className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
-          <h2 id="recent-heading" className="font-serif text-[24px] font-bold text-[#0F172A]">
+          <h2 id="recent-heading" className="text-[16px] font-bold text-[#0F172A]">
             Recent documents
           </h2>
 

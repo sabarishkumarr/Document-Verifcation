@@ -19,6 +19,10 @@ from backend.routes.applicants import applicants_bp
 from backend.routes.search import search_bp
 from backend.routes.demo import demo_bp
 from backend.routes.reports import reports_bp
+from backend.routes.repository import repository_bp
+from backend.routes.evaluation import evaluation_bp
+from backend.routes.triangulation_rules import triangulation_rules_bp
+from backend.api.v1.routes import api_v1_bp
 
 
 def create_app(config_name: str | None = None) -> Flask:
@@ -62,6 +66,10 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(search_bp)
     app.register_blueprint(demo_bp)
     app.register_blueprint(reports_bp)
+    app.register_blueprint(repository_bp)
+    app.register_blueprint(evaluation_bp)
+    app.register_blueprint(triangulation_rules_bp)
+    app.register_blueprint(api_v1_bp)
 
     # 5. Global JSON error handlers
     @app.errorhandler(400)

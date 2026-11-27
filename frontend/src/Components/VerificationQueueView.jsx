@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
+import VisualDocumentWorkspace from './VisualDocumentWorkspace';
 
 export default function VerificationQueueView({ initialApplicantId, initialDocId, officerName = 'Arjun Mehta' }) {
   // Queue list state (Applicants)
@@ -409,16 +410,11 @@ export default function VerificationQueueView({ initialApplicantId, initialDocId
       {/* Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
-          <div className="flex items-center gap-2 mb-1 text-[12px] font-semibold tracking-wide">
-            <span className="text-[#64748B] uppercase tracking-wider">KYC Verification</span>
-            <span className="text-[#CBD5E1]">/</span>
-            <span className="text-[#2563EB]">Applicant Workspace</span>
-          </div>
-          <h1 className="text-[34px] font-serif font-bold text-[#0F172A] tracking-tight leading-tight">
-            Applicant Verification Queue<span className="text-[#2563EB]">.</span>
+          <h1 className="text-[20px] font-bold text-[#0F172A] tracking-tight leading-tight">
+            Verification Queue
           </h1>
-          <p className="text-[14px] text-[#64748B]">
-            One row per applicant KYC dossier. Review consolidated multi-document extraction, verify identity attributes, and make compliance decisions.
+          <p className="text-[13px] text-[#64748B] mt-0.5">
+            Review applicant documents, inspect multi-document extraction, and make compliance decisions.
           </p>
         </div>
 
@@ -855,66 +851,18 @@ export default function VerificationQueueView({ initialApplicantId, initialDocId
       </div>
 
       {/* ======================================================== */}
-      {/* Document Inspection Modal */}
+      {/* VeriDoc AI 2.0 Visual Document Workspace */}
       {/* ======================================================== */}
       {inspectingDoc && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col border border-[#CBD5E1] overflow-hidden">
-            <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
-              <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="px-2 py-0.2 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-800">
-                    {inspectingDoc.classified_type || inspectingDoc.document_type}
-                  </span>
-                  <span className="text-[11px] font-mono text-[#64748B]">DOC-ID: #{inspectingDoc.id.slice(0, 8)}</span>
-                </div>
-                <h3 className="text-[16px] font-bold text-[#0F172A]">{inspectingDoc.original_filename}</h3>
-              </div>
-              <button
-                onClick={() => setInspectingDoc(null)}
-                className="p-1 rounded-lg hover:bg-slate-200 text-[#64748B]"
-              >
-                <span className="material-symbols-outlined text-[20px]">close</span>
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto space-y-4">
-              {/* Document File Preview Frame */}
-              <div className="border border-[#CBD5E1] rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center min-h-[300px]">
-                <iframe
-                  src={api.getDocumentFileUrl(inspectingDoc.id)}
-                  title={inspectingDoc.original_filename}
-                  className="w-full h-[400px] border-none"
-                />
-              </div>
-
-              {/* Extracted Fields Summary */}
-              <div className="space-y-2">
-                <h4 className="text-[12px] font-bold uppercase text-[#64748B]">Extracted Values on this Document</h4>
-                <div className="grid grid-cols-2 gap-2 text-[12px]">
-                  {Object.entries(inspectingDoc.extracted_fields || {}).map(([k, v]) => {
-                    if (typeof v === 'object' && v !== null) return null;
-                    return (
-                      <div key={k} className="p-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg">
-                        <div className="text-[10px] font-bold uppercase text-[#64748B]">{k.replace(/_/g, ' ')}</div>
-                        <div className="text-[#0F172A] font-medium mt-0.5">{String(v || 'Not detected')}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 border-t border-[#E2E8F0] bg-[#F8FAFC] flex justify-end">
-              <button
-                onClick={() => setInspectingDoc(null)}
-                className="px-4 py-2 bg-[#0F172A] text-white rounded-lg text-[12px] font-semibold"
-              >
-                Close Inspector
-              </button>
-            </div>
-          </div>
-        </div>
+        <VisualDocumentWorkspace
+          documentId={inspectingDoc.id}
+          onClose={() => setInspectingDoc(null)}
+          onAttributeUpdated={() => {
+            if (selectedApplicantId) {
+              selectApplicant(selectedApplicantId);
+            }
+          }}
+        />
       )}
 
       {/* ======================================================== */}

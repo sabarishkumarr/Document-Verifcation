@@ -29,15 +29,12 @@ from backend.config import Config, calculate_gemini_cost
 logger = logging.getLogger(__name__)
 
 # Standard JSON schema instructions for AI document understanding
-SYSTEM_PROMPT = """You are an expert KYC document intelligence agent for an Indian housing finance institution.
-Analyze the provided KYC identity document and extract structured identity data.
-Supported Indian KYC document types:
-- 'aadhaar' (Aadhaar Card / e-Aadhaar)
-- 'pan' (Permanent Account Number / Income Tax PAN Card)
-- 'passport' (Republic of India Passport)
-- 'voter_id' (Elector Photo Identity Card / EPIC)
-- 'driving_licence' (Indian Motor Driving Licence)
-- 'unknown' (If document is not one of the above 5 categories)
+SYSTEM_PROMPT = """You are a universal document intelligence agent.
+Analyze the provided document and extract structured identity data and all key-value attributes.
+Supported document types include:
+- KYC Identity: 'aadhaar', 'pan', 'passport', 'voter_id', 'driving_licence'
+- Financial & Commercial: 'salary_slip', 'bank_statement', 'commercial_invoice', 'tax_form_16', 'utility_bill'
+- Generic / Other: 'unknown' or specific document category
 
 CRITICAL INSTRUCTIONS:
 1. Extract ONLY facts visible on the document. NEVER invent, hallucinate, or extrapolate missing values.
@@ -45,11 +42,12 @@ CRITICAL INSTRUCTIONS:
 3. Dates must be formatted as YYYY-MM-DD if recognizable; otherwise return null.
 4. Estimate field-level confidence as a decimal between 0.0 and 1.0. If a field is ambiguous or partially obscured, provide a low confidence (< 0.70).
 5. If any mandatory identification field is low confidence, ambiguous, or missing, set manual_review_required to true.
-6. Return valid, well-formed JSON matching the exact schema below.
+6. Extract all discovered key-value attributes into the 'attributes' array with normalized 0-1000 bounding boxes [ymin, xmin, ymax, xmax] if discernible.
+7. Return valid, well-formed JSON matching the exact schema below.
 
 Output JSON Schema:
 {
-  "document_type": "aadhaar" | "pan" | "passport" | "voter_id" | "driving_licence" | "unknown",
+  "document_type": string,
   "applicant_name": string or null,
   "date_of_birth": "YYYY-MM-DD" or null,
   "gender": "MALE" | "FEMALE" | "TRANSGENDER" or null,
@@ -58,6 +56,16 @@ Output JSON Schema:
   "father_name": string or null,
   "issue_date": "YYYY-MM-DD" or null,
   "expiry_date": "YYYY-MM-DD" or null,
+  "attributes": [
+    {
+      "attribute_key": "snake_case_key",
+      "display_label": "Human Readable Label",
+      "attribute_value": "extracted text",
+      "data_type": "string" | "date" | "number" | "currency" | "boolean",
+      "confidence": float 0.0-1.0,
+      "bounding_box": [ymin, xmin, ymax, xmax] or null
+    }
+  ],
   "field_confidence": {
     "document_type": float 0.0-1.0,
     "applicant_name": float 0.0-1.0,
@@ -79,6 +87,30 @@ Output JSON Schema:
 """
 
 
+def build_system_prompt(learned_schema: Optional[Dict[str, Any]] = None) -> str:
+    """
+    Constructs the system prompt, dynamically injecting in-context learned schema
+    guidelines, anchor phrases, regex hints, and sanitized few-shot exemplars when available.
+    """
+    if not learned_schema:
+        return SYSTEM_PROMPT
+
+    v = learned_schema.get("version", 1)
+    prompt = SYSTEM_PROMPT + f"\n\n--- IN-CONTEXT LEARNED SCHEMA (Version {v}) ---\n"
+    prompt += "Use the following employee-verified schema guidelines, target attributes, anchor phrases, and few-shot exemplars to guide extraction:\n"
+    attrs = learned_schema.get("attribute_definitions", [])
+    if attrs:
+        prompt += f"Target Attributes Schema:\n{json.dumps(attrs, default=str)}\n"
+    anchors = learned_schema.get("anchor_phrases", {})
+    if anchors:
+        prompt += f"Known Text Anchor Phrases:\n{json.dumps(anchors, default=str)}\n"
+    few_shots = learned_schema.get("few_shot_examples", [])
+    if few_shots:
+        prompt += f"Few-Shot In-Context Examples:\n{json.dumps(few_shots, default=str)}\n"
+    prompt += "--- END LEARNED SCHEMA ---\n"
+    return prompt
+
+
 class AIDocumentExtractor:
     """
     Modular AI Document Extraction Service supporting multimodal document understanding
@@ -97,9 +129,11 @@ class AIDocumentExtractor:
         api_key: Optional[str] = None,
         model: Optional[str] = None,
         timeout: int = 30,
-        enabled: bool = True
+        enabled: bool = True,
+        db_path: Optional[str] = None
     ):
         self.enabled = enabled
+        self.db_path = db_path
         self.provider = (provider or os.getenv("AI_PROVIDER", "gemini")).lower()
         self.timeout = timeout or int(os.getenv("AI_TIMEOUT", 30))
 
@@ -110,7 +144,7 @@ class AIDocumentExtractor:
             self.genai_client = None
         else:  # default to gemini
             self.api_key = api_key if api_key is not None else (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
-            self.model = model or os.getenv("GEMINI_MODEL") or os.getenv("AI_MODEL", "gemini-3.5-flash-lite")
+            self.model = model or os.getenv("GEMINI_MODEL") or os.getenv("AI_MODEL", Config.GEMINI_MODEL)
             self.genai_client = None
             if GENAI_SDK_AVAILABLE and self.api_key and len(self.api_key.strip()) > 5:
                 try:
@@ -135,10 +169,16 @@ class AIDocumentExtractor:
         estimated_cost: Optional[float] = None,
         latency_ms: Optional[int] = None,
         error_message: Optional[str] = None,
-        request_type: str = "multimodal_extraction"
+        request_type: str = "multimodal_extraction",
+        page_number: int = 1,
+        input_modality: str = "multimodal",
+        transmitted_image_bytes: bool = False,
+        transmitted_text: bool = False,
+        per_page_estimated_cost: Optional[float] = None,
+        pricing_version: str = "gemini-3.5-flash-lite-2026-v1"
     ) -> None:
         """
-        Safely record an individual Gemini request-level API attempt in SQLite.
+        Safely record an individual Gemini request-level API attempt in SQLite/PostgreSQL.
         Errors during logging are swallowed and logged as warnings so AI extraction never fails due to logging.
         """
         if self.provider != "gemini":
@@ -158,10 +198,55 @@ class AIDocumentExtractor:
                 "status": status,
                 "error_message": self._sanitize_error(error_message) if error_message else None,
                 "request_type": request_type,
-                "channel": channel
-            })
+                "channel": channel,
+                "page_number": page_number,
+                "input_modality": input_modality,
+                "transmitted_image_bytes": transmitted_image_bytes,
+                "transmitted_text": transmitted_text,
+                "per_page_estimated_cost": per_page_estimated_cost or estimated_cost,
+                "pricing_version": pricing_version,
+            }, db_path=self.db_path)
         except Exception as e:
             logger.warning(f"Failed to record AI usage log attempt: {e}")
+
+    @staticmethod
+    def _is_retryable_error(exc: Exception) -> Tuple[bool, Optional[float]]:
+        """Determine if an exception is transient (429/500/502/503/timeout) and extract Retry-After if present."""
+        msg = str(exc).upper()
+        # Never retry permanent client/auth errors
+        if any(code in msg for code in ("400 ", "401 ", "403 ", "404 ", "INVALID_ARGUMENT", "PERMISSION_DENIED", "UNAUTHENTICATED", "API_KEY_INVALID")):
+            return False, None
+        retry_after = None
+        resp = getattr(exc, "response", None)
+        if resp is not None and hasattr(resp, "headers"):
+            ra = resp.headers.get("Retry-After")
+            if ra:
+                try:
+                    retry_after = float(ra)
+                except ValueError:
+                    pass
+        if any(code in msg for code in ("429", "500", "502", "503", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "TIMEOUT", "TIMED OUT", "CONNECTION")):
+            return True, retry_after
+        if isinstance(exc, (TimeoutError, ConnectionError)):
+            return True, retry_after
+        return False, None
+
+    def _call_with_retry(self, fn, max_retries: int = 3, base_delay: float = 1.0):
+        """Execute a Gemini API call with exponential backoff, jitter, and Retry-After support."""
+        import random
+        last_exc = None
+        for attempt in range(max_retries + 1):
+            try:
+                return fn()
+            except Exception as exc:
+                last_exc = exc
+                retryable, retry_after = self._is_retryable_error(exc)
+                if not retryable or attempt >= max_retries:
+                    raise
+                delay = retry_after if retry_after is not None else (base_delay * (2 ** attempt) + random.uniform(0.0, 0.5))
+                logger.warning(f"Transient Gemini API error (attempt {attempt + 1}/{max_retries + 1}): {self._sanitize_error(str(exc))}. Retrying in {delay:.2f}s...")
+                time.sleep(delay)
+        raise last_exc
 
     @staticmethod
     def _sanitize_error(error_str: str) -> str:
@@ -211,7 +296,8 @@ class AIDocumentExtractor:
         original_filename: Optional[str] = None,
         preextracted_text: Optional[str] = None,
         document_id: Optional[str] = None,
-        applicant_id: Optional[str] = None
+        applicant_id: Optional[str] = None,
+        learned_schema: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Execute AI multimodal structured extraction on a document file.
@@ -223,6 +309,7 @@ class AIDocumentExtractor:
             preextracted_text: Optional text already extracted via PyMuPDF
             document_id: Database document identifier for usage telemetry
             applicant_id: Applicant identifier for usage telemetry
+            learned_schema: Optional active versioned schema for in-context few-shot prompt injection
             
         Returns:
             Dict containing success status, extracted standardized KYC fields,
@@ -254,7 +341,7 @@ class AIDocumentExtractor:
             # 2. Dispatch to provider
             usage_dict = None
             if self.provider == "mock":
-                raw_json = self._mock_extraction(path, original_filename or path.name, preextracted_text)
+                raw_json = self._mock_extraction(path, original_filename or path.name, preextracted_text, learned_schema=learned_schema)
             elif self.provider == "openai":
                 raw_json = self._call_openai(image_bytes, rendered_mime, preextracted_text)
             else:
@@ -263,7 +350,8 @@ class AIDocumentExtractor:
                     rendered_mime,
                     preextracted_text,
                     document_id=document_id,
-                    applicant_id=applicant_id
+                    applicant_id=applicant_id,
+                    learned_schema=learned_schema
                 )
                 if isinstance(call_res, tuple) and len(call_res) == 2:
                     raw_json, usage_dict = call_res
@@ -359,7 +447,8 @@ class AIDocumentExtractor:
         mime_type: str,
         preextracted_text: Optional[str] = None,
         document_id: Optional[str] = None,
-        applicant_id: Optional[str] = None
+        applicant_id: Optional[str] = None,
+        learned_schema: Optional[Dict[str, Any]] = None
     ) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
         """
         Execute multimodal extraction via the official Google GenAI SDK (with REST fallback).
@@ -369,6 +458,7 @@ class AIDocumentExtractor:
         """
         clean_mime = mime_type if mime_type.startswith("image/") else "image/png"
         sdk_err_context = None
+        system_instructions = build_system_prompt(learned_schema)
 
         # 1. Primary: Use official Google GenAI SDK if initialized
         if self.genai_client is not None and GENAI_SDK_AVAILABLE:
@@ -376,7 +466,7 @@ class AIDocumentExtractor:
             try:
                 contents = [
                     types.Part.from_bytes(data=image_bytes, mime_type=clean_mime),
-                    SYSTEM_PROMPT
+                    system_instructions
                 ]
                 if preextracted_text:
                     contents.append(f"Embedded digital text extracted from document:\n---\n{preextracted_text[:4000]}\n---")
@@ -385,10 +475,12 @@ class AIDocumentExtractor:
                     response_mime_type="application/json",
                     temperature=0.1
                 )
-                response = self.genai_client.models.generate_content(
-                    model=self.model,
-                    contents=contents,
-                    config=config
+                response = self._call_with_retry(
+                    lambda: self.genai_client.models.generate_content(
+                        model=self.model,
+                        contents=contents,
+                        config=config
+                    )
                 )
                 latency_sdk = int((time.time() - t_sdk) * 1000)
                 if not response or not response.text:
@@ -722,11 +814,13 @@ class AIDocumentExtractor:
         self,
         path: Path,
         filename: str,
-        preextracted_text: Optional[str] = None
+        preextracted_text: Optional[str] = None,
+        learned_schema: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Safe mock extraction for automated testing and offline development.
-        Extracts heuristically from synthetic text or path to simulate multimodal AI output.
+        Extracts heuristically from synthetic text or path to simulate multimodal AI output,
+        augmented by in-context learned schema attributes.
         """
         fname = filename.lower()
         text = preextracted_text or ""
@@ -740,10 +834,29 @@ class AIDocumentExtractor:
 
         # Determine type
         doc_type = "unknown"
-        for t in ["passport", "voter_id", "driving_licence", "pan", "aadhaar"]:
-            if t in fname or (t.replace("_", " ") in text.lower()):
+        # Check synonyms in filename or text
+        synonym_map = {
+            "salary_slip": ["salary", "payslip", "pay slip"],
+            "bank_statement": ["bank", "statement", "passbook"],
+            "commercial_invoice": ["invoice", "tax invoice", "bill to"],
+            "tax_form_16": ["form 16", "form_16", "form16"],
+            "utility_bill": ["electricity", "utility", "water bill"],
+            "passport": ["passport"],
+            "voter_id": ["voter", "epic"],
+            "driving_licence": ["driving", "licence", "license"],
+            "pan": ["pan card", "form 49a"],
+            "aadhaar": ["aadhaar", "aadhar", "uidai"],
+        }
+        for t, syns in synonym_map.items():
+            if any(s in fname for s in syns) or any(s in text.lower() for s in syns):
                 doc_type = t
                 break
+
+        if doc_type == "unknown" and text:
+            from backend.services.classifier import DocumentClassifier
+            cls_res = DocumentClassifier.classify(text)
+            if cls_res["classified_type"] != "unknown":
+                doc_type = cls_res["classified_type"]
 
         # Simulate field detection
         name = None
@@ -751,6 +864,7 @@ class AIDocumentExtractor:
         dob = None
         gender = None
         exp = None
+        mock_attributes = []
 
         if "neha" in fname or "neha kapoor" in text.lower():
             name = "NEHA KAPOOR"
@@ -785,10 +899,95 @@ class AIDocumentExtractor:
             else:
                 id_num = "DPXYZ1234K"
 
+        # Specialized mock data for business/financial document types
+        if doc_type == "salary_slip":
+            name = name or "RAHUL SHARMA"
+            id_num = "EMP-9021"
+            mock_attributes = [
+                {"attribute_key": "employee_name", "display_label": "Employee Name", "attribute_value": name, "data_type": "string", "confidence": 0.96, "bounding_box": [120, 200, 150, 450]},
+                {"attribute_key": "employee_id", "display_label": "Employee ID", "attribute_value": id_num, "data_type": "string", "confidence": 0.95, "bounding_box": [160, 200, 185, 350]},
+                {"attribute_key": "basic_salary", "display_label": "Basic Salary", "attribute_value": "45000.00", "data_type": "currency", "confidence": 0.94, "bounding_box": [300, 500, 325, 600]},
+                {"attribute_key": "net_salary", "display_label": "Net Salary", "attribute_value": "68500.00", "data_type": "currency", "confidence": 0.98, "bounding_box": [550, 500, 580, 620]},
+                {"attribute_key": "gross_salary", "display_label": "Gross Salary", "attribute_value": "75000.00", "data_type": "currency", "confidence": 0.93, "bounding_box": [500, 500, 525, 620]},
+            ]
+        elif doc_type == "bank_statement":
+            name = name or "PRIYA VERMA"
+            id_num = "987654321012"
+            mock_attributes = [
+                {"attribute_key": "account_holder_name", "display_label": "Account Holder Name", "attribute_value": name, "data_type": "string", "confidence": 0.95, "bounding_box": [100, 150, 130, 400]},
+                {"attribute_key": "account_number", "display_label": "Account Number", "attribute_value": id_num, "data_type": "string", "confidence": 0.97, "bounding_box": [140, 150, 165, 380]},
+                {"attribute_key": "ifsc_code", "display_label": "IFSC Code", "attribute_value": "HDFC0001234", "data_type": "string", "confidence": 0.96, "bounding_box": [170, 150, 195, 320]},
+                {"attribute_key": "closing_balance", "display_label": "Closing Balance", "attribute_value": "142500.50", "data_type": "currency", "confidence": 0.95, "bounding_box": [600, 600, 630, 750]},
+            ]
+        elif doc_type == "commercial_invoice":
+            name = name or "ACME ENTERPRISES"
+            id_num = "INV-2026-089"
+            exp = "2026-12-31"
+            mock_attributes = [
+                {"attribute_key": "invoice_number", "display_label": "Invoice Number", "attribute_value": id_num, "data_type": "string", "confidence": 0.98, "bounding_box": [80, 650, 110, 850]},
+                {"attribute_key": "bill_to_name", "display_label": "Bill To", "attribute_value": name, "data_type": "string", "confidence": 0.94, "bounding_box": [150, 100, 180, 350]},
+                {"attribute_key": "total_amount", "display_label": "Total Amount", "attribute_value": "45000.00", "data_type": "currency", "confidence": 0.97, "bounding_box": [650, 600, 680, 780]},
+                {"attribute_key": "gstin", "display_label": "GSTIN", "attribute_value": "27AABCB1234F1Z5", "data_type": "string", "confidence": 0.96, "bounding_box": [120, 100, 145, 350]},
+            ]
+        elif doc_type == "utility_bill":
+            name = name or "ANIL KUMAR"
+            id_num = "CN-8849201"
+            exp = "2026-12-15"
+            mock_attributes = [
+                {"attribute_key": "consumer_name", "display_label": "Consumer Name", "attribute_value": name, "data_type": "string", "confidence": 0.95, "bounding_box": [110, 100, 140, 350]},
+                {"attribute_key": "consumer_number", "display_label": "Consumer Number", "attribute_value": id_num, "data_type": "string", "confidence": 0.97, "bounding_box": [150, 100, 175, 300]},
+                {"attribute_key": "bill_amount", "display_label": "Bill Amount", "attribute_value": "2450.00", "data_type": "currency", "confidence": 0.96, "bounding_box": [450, 500, 480, 650]},
+            ]
+
+        # Enrich mock attributes from learned_schema if present
+        if learned_schema and text:
+            attr_defs = learned_schema.get("attribute_definitions", [])
+            anchors = learned_schema.get("anchor_phrases", {})
+            regexes = learned_schema.get("regex_patterns", {})
+            existing_attr_keys = {a.get("attribute_key") for a in mock_attributes if isinstance(a, dict)}
+            for ad in attr_defs:
+                ak = ad.get("attribute_key")
+                if not ak or ak in existing_attr_keys:
+                    continue
+                extracted_val = None
+                # Check regex
+                rx = regexes.get(ak) or ad.get("regex_pattern")
+                if rx:
+                    try:
+                        rm = re.search(rx, text)
+                        if rm:
+                            extracted_val = rm.group(0).strip()
+                    except Exception:
+                        pass
+                # Check anchor phrases
+                if not extracted_val and ak in anchors:
+                    for anc in anchors[ak]:
+                        pattern = re.escape(anc) + r"\s*([^\n\r]+)"
+                        try:
+                            am = re.search(pattern, text, re.IGNORECASE)
+                            if am:
+                                extracted_val = am.group(1).strip()
+                                break
+                        except Exception:
+                            pass
+                if extracted_val:
+                    mock_attributes.append({
+                        "attribute_key": ak,
+                        "display_label": ad.get("display_label") or ak.replace("_", " ").title(),
+                        "attribute_value": extracted_val,
+                        "data_type": ad.get("data_type", "string"),
+                        "confidence": 0.96,
+                        "bounding_box": ad.get("typical_bbox") or [200, 100, 230, 400]
+                    })
+
         # Ambiguity check
+        is_kyc = doc_type in ("aadhaar", "pan", "passport", "voter_id", "driving_licence")
         manual_review = False
         ambiguous = []
-        if not id_num or not name:
+        if is_kyc and (not id_num or not name):
+            manual_review = True
+            ambiguous.append("mandatory_field_missing")
+        elif not is_kyc and doc_type != "unknown" and not mock_attributes and not id_num:
             manual_review = True
             ambiguous.append("mandatory_field_missing")
         if exp and exp < "2026-01-01":
@@ -805,6 +1004,7 @@ class AIDocumentExtractor:
             "father_name": "SUNIL KAPOOR" if "kapoor" in fname else None,
             "issue_date": "2023-08-31" if doc_type == "passport" else None,
             "expiry_date": exp,
+            "attributes": mock_attributes,
             "field_confidence": {
                 "document_type": 0.98 if doc_type != "unknown" else 0.30,
                 "applicant_name": 0.95 if name else 0.0,
@@ -831,10 +1031,13 @@ class AIDocumentExtractor:
         - Canonical date formatting.
         - Field confidence bounds.
         - Dual-key compatibility (applicant_name <-> name, date_of_birth <-> dob, identification_number <-> id_number).
+        - Dynamic attribute synthesis with normalized bounding boxes.
         """
         doc_type = str(raw.get("document_type", "unknown")).lower().strip()
-        if doc_type not in ("aadhaar", "pan", "passport", "voter_id", "driving_licence"):
-            doc_type = "unknown"
+        cleaned_doc_type = re.sub(r"[^a-z0-9_]", "_", doc_type).strip("_")
+        if not cleaned_doc_type:
+            cleaned_doc_type = "unknown"
+        doc_type = cleaned_doc_type
 
         raw_id = raw.get("identification_number")
         id_number = str(raw_id).strip() if raw_id else None
@@ -886,19 +1089,105 @@ class AIDocumentExtractor:
             except (ValueError, TypeError):
                 field_confidence[k] = 0.0
 
+        # Dynamic Universal Attributes List
+        raw_attributes = raw.get("attributes") or []
+        normalized_attributes: List[Dict[str, Any]] = []
+        seen_attr_keys = set()
+
+        if isinstance(raw_attributes, list):
+            for attr in raw_attributes:
+                if not isinstance(attr, dict):
+                    continue
+                k = str(attr.get("attribute_key") or attr.get("name") or "").strip().lower().replace(" ", "_")
+                k = re.sub(r"[^a-z0-9_]", "", k)
+                v = str(attr.get("attribute_value") or attr.get("value") or "").strip()
+                if not k or not v:
+                    continue
+                lbl = str(attr.get("display_label") or attr.get("label") or k.replace("_", " ").title())
+                dtype = str(attr.get("data_type") or "string").lower()
+                if dtype not in ("string", "date", "number", "currency", "boolean"):
+                    dtype = "string"
+                try:
+                    c_score = max(0.0, min(1.0, float(attr.get("confidence") or attr.get("confidence_score") or 0.90)))
+                except (ValueError, TypeError):
+                    c_score = 0.85
+
+                bbox = attr.get("bounding_box") or attr.get("bbox")
+                bbox_dict = None
+                if isinstance(bbox, list) and len(bbox) == 4:
+                    bbox_dict = {
+                        "ymin": max(0, min(1000, int(bbox[0]))),
+                        "xmin": max(0, min(1000, int(bbox[1]))),
+                        "ymax": max(0, min(1000, int(bbox[2]))),
+                        "xmax": max(0, min(1000, int(bbox[3]))),
+                    }
+                elif isinstance(bbox, dict) and all(coord in bbox for coord in ("ymin", "xmin", "ymax", "xmax")):
+                    bbox_dict = {
+                        "ymin": max(0, min(1000, int(bbox["ymin"]))),
+                        "xmin": max(0, min(1000, int(bbox["xmin"]))),
+                        "ymax": max(0, min(1000, int(bbox["ymax"]))),
+                        "xmax": max(0, min(1000, int(bbox["xmax"]))),
+                    }
+
+                normalized_attributes.append({
+                    "attribute_key": k,
+                    "display_label": lbl,
+                    "attribute_value": v,
+                    "data_type": dtype,
+                    "confidence_score": c_score,
+                    "bounding_box": bbox_dict,
+                    "page_number": int(attr.get("page_number", page_num)),
+                    "provenance": attr.get("provenance", f"ai_{self.provider}"),
+                    "is_custom": bool(attr.get("is_custom", False))
+                })
+                seen_attr_keys.add(k)
+
+        # Synthesize top-level identity fields into normalized_attributes if not present
+        field_mappings = [
+            ("applicant_name", "Applicant Name", applicant_name, "string", field_confidence.get("applicant_name", 0.90)),
+            ("identification_number", "ID Number", masked_id or id_number, "string", field_confidence.get("identification_number", 0.90)),
+            ("date_of_birth", "Date of Birth", dob, "date", field_confidence.get("date_of_birth", 0.85)),
+            ("gender", "Gender", gender, "string", field_confidence.get("gender", 0.85)),
+            ("address", "Address", address, "string", field_confidence.get("address", 0.80)),
+            ("father_name", "Father's Name", father_name, "string", 0.80),
+            ("issue_date", "Date of Issue", issue_date, "date", field_confidence.get("issue_date", 0.80)),
+            ("expiry_date", "Date of Expiry", expiry_date, "date", field_confidence.get("expiry_date", 0.85)),
+        ]
+        for key, label, val, dtype, conf in field_mappings:
+            if val and key not in seen_attr_keys:
+                normalized_attributes.append({
+                    "attribute_key": key,
+                    "display_label": label,
+                    "attribute_value": str(val),
+                    "data_type": dtype,
+                    "confidence_score": conf,
+                    "bounding_box": None,
+                    "page_number": page_num,
+                    "provenance": f"ai_{self.provider}",
+                    "is_custom": False
+                })
+                seen_attr_keys.add(key)
+
         # Review triggers: low confidence or missing mandatory fields
         manual_review = bool(raw.get("manual_review_required", False))
         ambiguous = list(raw.get("ambiguous_fields") or [])
 
-        if not applicant_name or field_confidence.get("applicant_name", 0) < 0.70:
-            manual_review = True
-            if "applicant_name" not in ambiguous:
-                ambiguous.append("applicant_name")
+        is_kyc = doc_type in ("aadhaar", "pan", "passport", "voter_id", "driving_licence")
+        if is_kyc:
+            if not applicant_name or field_confidence.get("applicant_name", 0) < 0.70:
+                manual_review = True
+                if "applicant_name" not in ambiguous:
+                    ambiguous.append("applicant_name")
 
-        if not id_number or field_confidence.get("identification_number", 0) < 0.70:
-            manual_review = True
-            if "identification_number" not in ambiguous:
-                ambiguous.append("identification_number")
+            if not id_number or field_confidence.get("identification_number", 0) < 0.70:
+                manual_review = True
+                if "identification_number" not in ambiguous:
+                    ambiguous.append("identification_number")
+        else:
+            if not normalized_attributes and not id_number and not applicant_name:
+                manual_review = True
+                if "document_attributes_missing" not in ambiguous:
+                    ambiguous.append("document_attributes_missing")
 
         source_evidence = raw.get("source_evidence") or {}
         source_evidence["page_number"] = page_num
@@ -915,6 +1204,7 @@ class AIDocumentExtractor:
             "father_name": father_name,
             "issue_date": issue_date,
             "expiry_date": expiry_date,
+            "attributes": normalized_attributes,
             "extraction_method": f"ai_{self.provider}",
             "field_confidence": field_confidence,
             "source_evidence": source_evidence,
@@ -932,6 +1222,98 @@ class AIDocumentExtractor:
                 "father_name": father_name
             }
         }
+
+    def classify_document(
+        self,
+        file_path: Path,
+        mime_type: Optional[str] = None,
+        original_filename: Optional[str] = None,
+        document_id: Optional[str] = None,
+        applicant_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        AI-first multimodal document classification using registered PostgreSQL document types.
+        Returns document_type, subtype, issuing_authority, language, is_readable,
+        is_incomplete_or_damaged, confidence, reasoning, and usage telemetry.
+        """
+        t0 = time.time()
+        if not self.is_configured():
+            return {"success": False, "document_type": "unknown", "confidence": 0.0, "error": "Gemini AI is not configured."}
+        path = Path(file_path)
+        if not path.exists():
+            return {"success": False, "document_type": "unknown", "confidence": 0.0, "error": f"File not found: {path.name}"}
+
+        # Load registered active document types dynamically from PostgreSQL
+        registered_types = []
+        try:
+            from backend.database.db import list_document_types
+            for dt in list_document_types(active_only=True, db_path=self.db_path):
+                tk = dt.get("type_key") or dt.get("id")
+                if tk and tk != "unknown":
+                    registered_types.append(f"{tk} ({dt.get('display_name', tk)})")
+        except Exception:
+            pass
+        types_str = ", ".join(registered_types) if registered_types else "aadhaar, pan, passport, voter_id, driving_licence, salary_slip, bank_statement, commercial_invoice, tax_form_16, utility_bill"
+
+        prompt = (
+            "You are a document classification specialist. Classify the provided document image/PDF.\n"
+            f"Registered document types: {types_str}.\n"
+            "If the document does not clearly match any registered type, set document_type to 'unknown'. Do NOT invent types.\n"
+            "Return valid JSON matching:\n"
+            '{"document_type": "type_key or unknown", "subtype": string or null, "issuing_authority": string or null, '
+            '"language": string or null, "is_readable": boolean, "is_incomplete_or_damaged": boolean, '
+            '"confidence": float 0.0-1.0, "reasoning": "concise evidence"}'
+        )
+
+        try:
+            raw_bytes = path.read_bytes()
+            ext = path.suffix.lower()
+            actual_mime = mime_type or ("application/pdf" if ext == ".pdf" else ("image/png" if ext == ".png" else "image/jpeg"))
+            if self.provider == "mock":
+                return {"success": True, "document_type": "pan", "confidence": 0.95, "is_readable": True, "is_incomplete_or_damaged": False, "reasoning": "Mock classification", "latency_ms": 1}
+
+            parts = [types.Part.from_bytes(data=raw_bytes, mime_type=actual_mime), prompt]
+            response = self._call_with_retry(
+                lambda: self.genai_client.models.generate_content(
+                    model=self.model,
+                    contents=parts,
+                    config=types.GenerateContentConfig(temperature=0.0, response_mime_type="application/json")
+                )
+            )
+            latency_ms = int((time.time() - t0) * 1000)
+            parsed = self._safe_parse_json(response.text)
+            usage = getattr(response, "usage_metadata", None)
+            p_tok = getattr(usage, "prompt_token_count", 0) or 0 if usage else 0
+            c_tok = getattr(usage, "candidates_token_count", 0) or 0 if usage else 0
+            t_tok = getattr(usage, "total_token_count", p_tok + c_tok) or 0 if usage else 0
+            cost = calculate_gemini_cost(p_tok, c_tok)
+            self._record_api_attempt(
+                document_id=document_id, applicant_id=applicant_id, channel="sdk",
+                prompt_tokens=p_tok, candidate_tokens=c_tok, total_tokens=t_tok,
+                estimated_cost=cost, latency_ms=latency_ms, status="success",
+                request_type="multimodal_classification", input_modality="multimodal"
+            )
+            return {
+                "success": True,
+                "document_type": str(parsed.get("document_type") or "unknown").lower().strip(),
+                "subtype": parsed.get("subtype"),
+                "issuing_authority": parsed.get("issuing_authority"),
+                "language": parsed.get("language"),
+                "is_readable": bool(parsed.get("is_readable", True)),
+                "is_incomplete_or_damaged": bool(parsed.get("is_incomplete_or_damaged", False)),
+                "confidence": float(parsed.get("confidence", 0.0)),
+                "reasoning": parsed.get("reasoning", ""),
+                "latency_ms": latency_ms,
+                "tokens": {"prompt": p_tok, "candidate": c_tok, "total": t_tok, "cost": cost}
+            }
+        except Exception as e:
+            latency_ms = int((time.time() - t0) * 1000)
+            self._record_api_attempt(
+                document_id=document_id, applicant_id=applicant_id, channel="sdk",
+                latency_ms=latency_ms, status="error", error_message=str(e),
+                request_type="multimodal_classification", input_modality="multimodal"
+            )
+            return {"success": False, "document_type": "unknown", "confidence": 0.0, "error": self._sanitize_error(str(e)), "latency_ms": latency_ms}
 
     @staticmethod
     def _safe_parse_json(text: str) -> Dict[str, Any]:

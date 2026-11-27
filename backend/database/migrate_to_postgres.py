@@ -122,6 +122,103 @@ CREATE INDEX IF NOT EXISTS idx_ai_usage_doc ON ai_usage_logs(document_id);
 CREATE INDEX IF NOT EXISTS idx_ai_usage_applicant ON ai_usage_logs(applicant_id);
 CREATE INDEX IF NOT EXISTS idx_ai_usage_status ON ai_usage_logs(status);
 CREATE INDEX IF NOT EXISTS idx_ai_usage_provider ON ai_usage_logs(provider);
+
+-- VeriDoc AI 2.0 Triangulation and Enterprise API Tables
+CREATE TABLE IF NOT EXISTS comparison_rule_configurations (
+    id VARCHAR(100) PRIMARY KEY,
+    combination_key VARCHAR(200) UNIQUE NOT NULL,
+    document_types JSONB NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    active_version INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by VARCHAR(100) DEFAULT 'System',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_rule_cfg_combo ON comparison_rule_configurations(combination_key);
+
+CREATE TABLE IF NOT EXISTS comparison_rule_versions (
+    id SERIAL PRIMARY KEY,
+    configuration_id VARCHAR(100) NOT NULL REFERENCES comparison_rule_configurations(id) ON DELETE CASCADE,
+    version INTEGER NOT NULL,
+    attribute_rules JSONB NOT NULL,
+    ai_metadata JSONB DEFAULT '{}',
+    published_by VARCHAR(100) DEFAULT 'System',
+    change_summary TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(configuration_id, version)
+);
+CREATE INDEX IF NOT EXISTS idx_rule_ver_cfg ON comparison_rule_versions(configuration_id);
+
+CREATE TABLE IF NOT EXISTS external_applicant_mappings (
+    id SERIAL PRIMARY KEY,
+    source_system VARCHAR(100) NOT NULL,
+    external_applicant_reference VARCHAR(255) NOT NULL,
+    applicant_id VARCHAR(255) NOT NULL,
+    external_application_reference VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(source_system, external_applicant_reference)
+);
+CREATE INDEX IF NOT EXISTS idx_ext_map ON external_applicant_mappings(source_system, external_applicant_reference);
+
+CREATE TABLE IF NOT EXISTS batch_submissions (
+    id VARCHAR(100) PRIMARY KEY,
+    source_system VARCHAR(100) NOT NULL,
+    external_applicant_reference VARCHAR(255) NOT NULL,
+    external_application_reference VARCHAR(255),
+    idempotency_key VARCHAR(255) UNIQUE,
+    applicant_id VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'queued',
+    total_documents INTEGER DEFAULT 0,
+    accepted_documents INTEGER DEFAULT 0,
+    failed_documents INTEGER DEFAULT 0,
+    verification_status VARCHAR(50) DEFAULT 'pending',
+    rule_configuration_id VARCHAR(100),
+    rule_version INTEGER DEFAULT 1,
+    results_summary JSONB DEFAULT '{}',
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    started_at TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX IF NOT EXISTS idx_batch_status ON batch_submissions(status);
+
+CREATE TABLE IF NOT EXISTS batch_documents (
+    id SERIAL PRIMARY KEY,
+    batch_id VARCHAR(100) NOT NULL REFERENCES batch_submissions(id) ON DELETE CASCADE,
+    document_id VARCHAR(255),
+    external_document_reference VARCHAR(255),
+    file_name VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    specified_document_type VARCHAR(100),
+    status VARCHAR(50) DEFAULT 'pending',
+    job_id VARCHAR(255),
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_batch_doc_batch ON batch_documents(batch_id);
+
+CREATE TABLE IF NOT EXISTS webhook_deliveries (
+    id SERIAL PRIMARY KEY,
+    subscription_id INTEGER,
+    event_name VARCHAR(100) NOT NULL,
+    payload JSONB NOT NULL,
+    status_code INTEGER,
+    attempt INTEGER DEFAULT 1,
+    success BOOLEAN DEFAULT FALSE,
+    response_body TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS audit_access_logs (
+    id SERIAL PRIMARY KEY,
+    event_type VARCHAR(100) NOT NULL,
+    user_id VARCHAR(255) NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_audit_access_event ON audit_access_logs(event_type);
 """
 
 

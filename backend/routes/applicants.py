@@ -9,6 +9,8 @@ from backend.database.db import (
     insert_applicant,
     get_documents_by_applicant,
     get_audit_reviews,
+    get_applicant_triangulation,
+    save_applicant_triangulation,
 )
 from backend.services.comparator import CrossDocumentComparator
 from backend.services.matrix_exporter import export_comparison_matrix_to_xlsx, export_comparison_matrix_to_csv
@@ -87,10 +89,16 @@ def review_applicant(applicant_id: str):
 def create_applicant():
     """Create a new applicant profile."""
     body = request.get_json(silent=True) or {}
-    applicant_id = body.get("id") or f"APP-{uuid.uuid4().hex[:6].upper()}"
-    from backend.database.db import is_placeholder_name
     raw_name = body.get("name")
-    name = None if is_placeholder_name(raw_name) else raw_name.strip()
+    from backend.database.db import is_placeholder_name
+    if not raw_name or not str(raw_name).strip() or is_placeholder_name(raw_name):
+        return format_response(
+            success=False,
+            message="Applicant Full Name is mandatory when creating an applicant profile.",
+            status_code=400
+        )
+    name = str(raw_name).strip()
+    applicant_id = body.get("id") or f"APP-{uuid.uuid4().hex[:6].upper()}"
     email = body.get("email")
     phone = body.get("phone")
 
@@ -258,4 +266,155 @@ def update_applicant_profile(applicant_id: str):
         message=f"Applicant '{applicant_id}' profile updated successfully.",
         data={"applicant": updated}
     )
+
+
+@applicants_bp.route("/<applicant_id>/triangulation", methods=["GET"])
+def get_applicant_triangulation_route(applicant_id: str):
+    """
+    Retrieve applicant cross-document triangulation matrix and consistency report.
+    Returns cached matrix if present, or dynamically runs CrossDocumentComparator.
+    """
+    db_path = current_app.config.get("DATABASE_PATH")
+    applicant = get_applicant(applicant_id, db_path=db_path)
+    if not applicant:
+        return format_response(
+            success=False,
+            message=f"Applicant with ID '{applicant_id}' not found.",
+            status_code=404
+        )
+
+    # Check for saved triangulation
+    saved = get_applicant_triangulation(applicant_id, db_path=db_path)
+    if saved:
+        return format_response(
+            success=True,
+            message="Saved applicant triangulation retrieved.",
+            data={"triangulation": saved, "cached": True}
+        )
+
+    # Dynamic compute
+    docs = get_documents_by_applicant(applicant_id, db_path=db_path)
+    hydrated_docs = []
+    for d in docs:
+        if d.get("extracted_fields") and isinstance(d["extracted_fields"], str):
+            try:
+                d["extracted_fields"] = json.loads(d["extracted_fields"])
+            except Exception:
+                pass
+        if d.get("validation_results") and isinstance(d["validation_results"], str):
+            try:
+                d["validation_results"] = json.loads(d["validation_results"])
+            except Exception:
+                pass
+        hydrated_docs.append(d)
+
+    cross = CrossDocumentComparator.compare_applicant_documents(
+        hydrated_docs,
+        applicant_name=applicant.get("name"),
+        applicant_id=applicant_id
+    )
+
+    result = {
+        "applicant_id": applicant_id,
+        "triangulation_matrix": cross.get("matrix") or {},
+        "overall_status": cross.get("status") or "VERIFIED",
+        "consistency_score": float(cross.get("consistency_score", 100.0)) / 100.0,
+        "discrepancy_count": cross.get("discrepancy_count") or len(cross.get("discrepancies", [])),
+        "discrepancies": cross.get("discrepancies") or [],
+        "rule_configuration_id": cross.get("rule_configuration_id"),
+        "rule_version": cross.get("rule_version", 1),
+        "documents_analyzed": len(hydrated_docs),
+        "created_at": None,
+        "updated_at": None,
+        "verified_by": None,
+        "notes": None,
+    }
+
+    return format_response(
+        success=True,
+        message="Dynamic applicant triangulation computed.",
+        data={"triangulation": result, "cached": False}
+    )
+
+
+@applicants_bp.route("/<applicant_id>/triangulation", methods=["POST"])
+def run_applicant_triangulation_route(applicant_id: str):
+    """
+    Force a re-run of cross-document triangulation for an applicant and save the results.
+    """
+    db_path = current_app.config.get("DATABASE_PATH")
+    applicant = get_applicant(applicant_id, db_path=db_path)
+    if not applicant:
+        return format_response(
+            success=False,
+            message=f"Applicant with ID '{applicant_id}' not found.",
+            status_code=404
+        )
+
+    docs = get_documents_by_applicant(applicant_id, db_path=db_path)
+    hydrated_docs = []
+    for d in docs:
+        if d.get("extracted_fields") and isinstance(d["extracted_fields"], str):
+            try:
+                d["extracted_fields"] = json.loads(d["extracted_fields"])
+            except Exception:
+                pass
+        if d.get("validation_results") and isinstance(d["validation_results"], str):
+            try:
+                d["validation_results"] = json.loads(d["validation_results"])
+            except Exception:
+                pass
+        hydrated_docs.append(d)
+
+    cross = CrossDocumentComparator.compare_applicant_documents(
+        hydrated_docs,
+        applicant_name=applicant.get("name"),
+        applicant_id=applicant_id
+    )
+
+    discrepancies = cross.get("discrepancies") or []
+    payload = {
+        "triangulation_matrix": cross.get("matrix") or {},
+        "overall_status": cross.get("status") or ("FLAGGED" if discrepancies else "VERIFIED"),
+        "consistency_score": float(cross.get("consistency_score", 100.0)) / 100.0,
+        "discrepancy_count": len(discrepancies),
+        "discrepancies": discrepancies,
+        "rule_configuration_id": cross.get("rule_configuration_id"),
+        "rule_version": cross.get("rule_version", 1),
+        "verified_by": request.get_json(silent=True, force=False) and request.get_json(silent=True).get("verified_by") or "System Auto-Triangulation",
+        "notes": f"Triangulation computed across {len(hydrated_docs)} applicant documents."
+    }
+
+    saved = save_applicant_triangulation(applicant_id, payload, db_path=db_path)
+
+    return format_response(
+        success=True,
+        message="Applicant cross-document triangulation recomputed and persisted.",
+        data={"triangulation": saved}
+    )
+
+
+@applicants_bp.route("/<applicant_id>/triangulation/resolve", methods=["POST"])
+def resolve_applicant_triangulation_route(applicant_id: str):
+    """
+    Submit officer resolutions or overrides for cross-document discrepancies.
+    """
+    db_path = current_app.config.get("DATABASE_PATH")
+    applicant = get_applicant(applicant_id, db_path=db_path)
+    if not applicant:
+        return format_response(
+            success=False,
+            message=f"Applicant with ID '{applicant_id}' not found.",
+            status_code=404
+        )
+
+    body = request.get_json(silent=True) or {}
+    saved = save_applicant_triangulation(applicant_id, body, db_path=db_path)
+
+    return format_response(
+        success=True,
+        message="Applicant triangulation discrepancy resolution saved.",
+        data={"triangulation": saved}
+    )
+
 

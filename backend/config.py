@@ -65,7 +65,7 @@ class Config:
     AI_EXTRACTION_ENABLED = os.getenv("AI_EXTRACTION_ENABLED", "True").lower() in ("true", "1")
     AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini").lower()
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    GEMINI_MODEL = os.getenv("GEMINI_MODEL") or os.getenv("AI_MODEL", "gemini-3.5-flash-lite")
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL") or os.getenv("AI_MODEL", "gemini-3.1-flash-lite")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     AI_MODEL = GEMINI_MODEL
     AI_TIMEOUT = int(os.getenv("AI_TIMEOUT", 30))

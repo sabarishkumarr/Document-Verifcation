@@ -203,7 +203,17 @@ class CrossDocumentComparator:
                     single_checks.append(exp_res)
 
             verdict = "DISCREPANCY_FLAGGED" if single_discrepancies else ("SINGLE_DOCUMENT_RECORDED" if len(valid_docs) == 1 else "NO_DOCUMENTS")
-            score = 60.0 if single_discrepancies else (100.0 if len(valid_docs) == 1 else 0.0)
+            
+            # Compute confidence score using VerificationConfidenceEngine
+            from backend.services.confidence_service import VerificationConfidenceEngine
+            confidence_data = VerificationConfidenceEngine.calculate_overall_confidence(
+                documents=valid_docs,
+                cross_checks=single_checks,
+                discrepancies=single_discrepancies,
+                declared_name=applicant_name,
+                has_expired_doc=any("expired" in d.lower() for d in single_discrepancies)
+            )
+            score = confidence_data["overall_confidence"]
             summary = (
                 single_discrepancies[0]
                 if single_discrepancies
@@ -214,11 +224,12 @@ class CrossDocumentComparator:
                 )
             )
 
-            matrix = cls._build_comparison_matrix(valid_docs, applicant_name, applicant_id, single_discrepancies, verdict, score)
+            matrix = cls._build_comparison_matrix(valid_docs, applicant_name, applicant_id, single_discrepancies, verdict, score, confidence_data=confidence_data)
 
             return {
                 "overall_verdict": verdict,
                 "consistency_score": score,
+                "confidence": confidence_data,
                 "total_documents_compared": len(valid_docs),
                 "summary": summary,
                 "discrepancies": single_discrepancies,
@@ -232,39 +243,71 @@ class CrossDocumentComparator:
             }
 
         # 4. Multi-document comparisons
+        doc_types = [d.get("type", "").lower() for d in valid_docs if d.get("type")]
+        rule_config_id = None
+        rule_version = 1
+        active_rules_map = {}
+        combination_key = "unknown"
+        try:
+            from backend.services.triangulation_rule_service import TriangulationRuleService, get_canonical_combination_key
+            combination_key = get_canonical_combination_key(doc_types) if doc_types else "unknown"
+            rule_info = TriangulationRuleService.get_active_rules(combination_key)
+            rule_config_id = rule_info.get("configuration", {}).get("id")
+            rule_version = rule_info.get("active_version", 1)
+            for r in rule_info.get("rules", []):
+                concept = r.get("concept") or r.get("source_attribute")
+                if concept:
+                    active_rules_map[concept] = r
+                if r.get("source_attribute"):
+                    active_rules_map[r["source_attribute"]] = r
+                if r.get("target_attribute"):
+                    active_rules_map[r["target_attribute"]] = r
+        except Exception:
+            pass
+
         discrepancies: List[str] = list(isolation_errors)
         cross_checks: List[Dict[str, Any]] = []
 
         # A. Customer Name
-        name_result = cls._compare_names(valid_docs, applicant_name)
-        cross_checks.append(name_result)
-        if name_result["status"] in ("fail", "warning"):
-            discrepancies.append(name_result["message"])
+        is_name_enabled = active_rules_map.get("name", {}).get("is_enabled", True) if active_rules_map else True
+        if is_name_enabled:
+            name_result = cls._compare_names(valid_docs, applicant_name)
+            cross_checks.append(name_result)
+            if name_result["status"] in ("fail", "warning"):
+                discrepancies.append(name_result["message"])
 
         # B. Date of Birth
-        dob_result = cls._compare_dobs(valid_docs)
-        cross_checks.append(dob_result)
-        if dob_result["status"] == "fail":
-            discrepancies.append(dob_result["message"])
+        is_dob_enabled = active_rules_map.get("dob", {}).get("is_enabled", True) if active_rules_map else True
+        if is_dob_enabled:
+            dob_result = cls._compare_dobs(valid_docs)
+            cross_checks.append(dob_result)
+            if dob_result["status"] == "fail":
+                discrepancies.append(dob_result["message"])
 
         # C. Gender
-        gender_result = cls._compare_genders(valid_docs)
-        cross_checks.append(gender_result)
-        if gender_result["status"] == "fail":
-            discrepancies.append(gender_result["message"])
+        is_gender_enabled = active_rules_map.get("gender", {}).get("is_enabled", True) if active_rules_map else True
+        if is_gender_enabled:
+            gender_result = cls._compare_genders(valid_docs)
+            cross_checks.append(gender_result)
+            if gender_result["status"] == "fail":
+                discrepancies.append(gender_result["message"])
 
         # D. Father's / Guardian's Name
-        father_result = cls._compare_father_names(valid_docs)
-        cross_checks.append(father_result)
-        if father_result["status"] == "fail":
-            discrepancies.append(father_result["message"])
+        is_father_enabled = active_rules_map.get("father_name", {}).get("is_enabled", True) if active_rules_map else True
+        if is_father_enabled:
+            father_result = cls._compare_father_names(valid_docs)
+            cross_checks.append(father_result)
+            if father_result["status"] == "fail":
+                discrepancies.append(father_result["message"])
 
         # E. Address
-        address_result = cls._compare_addresses(valid_docs)
-        if address_result.get("evaluated"):
-            cross_checks.append(address_result)
-            if address_result["status"] in ("fail", "warning"):
-                discrepancies.append(address_result["message"])
+        is_address_enabled = active_rules_map.get("address", {}).get("is_enabled", True) if active_rules_map else True
+        if is_address_enabled:
+            address_result = cls._compare_addresses(valid_docs)
+            if address_result.get("evaluated"):
+                cross_checks.append(address_result)
+                if address_result["status"] in ("fail", "warning"):
+                    discrepancies.append(address_result["message"])
 
         # F. Identification Number Consistency
         id_result = cls._compare_id_numbers(valid_docs)
@@ -299,41 +342,64 @@ class CrossDocumentComparator:
                     if d not in discrepancies:
                         discrepancies.append(d)
 
-        # Calculate scores
-        scores = [check.get("score", 100.0) for check in cross_checks if check.get("evaluated")]
-        raw_score = round(sum(scores) / max(len(scores), 1), 1) if scores else 100.0
+        # Check document validity & expiry
+        has_expired_doc = any(c.get("field") == "document_validity" and c.get("status") == "fail" for c in cross_checks)
+
+        # Calculate authoritative confidence and validate identity
+        from backend.services.confidence_service import VerificationConfidenceEngine
+        confidence_data = VerificationConfidenceEngine.calculate_overall_confidence(
+            documents=valid_docs,
+            cross_checks=cross_checks,
+            discrepancies=discrepancies,
+            declared_name=applicant_name,
+            has_expired_doc=has_expired_doc
+        )
+
+        identity_val = confidence_data.get("identity_validation") or {}
+        if identity_val.get("is_blocking"):
+            if identity_val["message"] not in discrepancies:
+                discrepancies.insert(0, identity_val["message"])
 
         # Determine Verdict
         discrepancies = list(dict.fromkeys(discrepancies))
-        has_critical_fail = any(c["status"] == "fail" for c in cross_checks)
-        has_warning = any(c["status"] == "warning" for c in cross_checks)
+        has_critical_fail = any(c["status"] == "fail" for c in cross_checks) or identity_val.get("is_blocking")
+        has_warning = any(c["status"] == "warning" for c in cross_checks) or (identity_val.get("status") == "REVIEW_REQUIRED")
+
+        # Determine consistency_score: 100.0 if all cross-checks passed with zero discrepancies
+        if not discrepancies and not has_critical_fail and not has_warning:
+            overall_score = 100.0
+        else:
+            overall_score = confidence_data["overall_confidence"]
 
         if has_critical_fail:
             verdict = "DISCREPANCY_FLAGGED"
-            overall_score = min(raw_score, 60.0)
             summary = f"Verification flagged with {len(discrepancies)} discrepancy(ies). Issues: {'; '.join(discrepancies[:2])}"
-        elif has_warning or raw_score < 85.0:
+        elif has_warning or overall_score <= 75.0:
             verdict = "MANUAL_REVIEW"
-            overall_score = min(raw_score, 80.0)
-            summary = f"Manual review recommended due to document variations. Issues: {'; '.join(discrepancies[:2])}"
+            summary = f"Manual review recommended. Issues: {'; '.join(discrepancies[:2]) if discrepancies else 'Verification confidence is at or below the 75% threshold.'}"
         else:
             verdict = "VERIFIED"
-            overall_score = raw_score
-            summary = f"Cross-verified {len(valid_docs)} documents with {overall_score}% overall consistency."
+            summary = f"Cross-verified {len(valid_docs)} documents with {overall_score}% overall verification confidence."
 
         # Generate Structured Comparison Matrix
         matrix = cls._build_comparison_matrix(
-            valid_docs, applicant_name, applicant_id, discrepancies, verdict, overall_score
+            valid_docs, applicant_name, applicant_id, discrepancies, verdict, overall_score,
+            active_rules_map=active_rules_map, rule_config_id=rule_config_id, rule_version=rule_version, combination_key=combination_key,
+            confidence_data=confidence_data
         )
 
         return {
             "overall_verdict": verdict,
             "consistency_score": overall_score,
+            "confidence": confidence_data,
             "total_documents_compared": len(valid_docs),
             "summary": summary,
             "discrepancies": discrepancies,
             "cross_checks": cross_checks,
             "matrix": matrix,
+            "rule_configuration_id": rule_config_id,
+            "rule_version": rule_version,
+            "combination_key": combination_key,
             "documents_evaluated": [
                 {"id": d["id"], "filename": d["filename"], "type": d["type"]}
                 for d in valid_docs
@@ -756,7 +822,12 @@ class CrossDocumentComparator:
         applicant_id: Optional[str],
         discrepancies: List[str],
         verdict: str,
-        score: float
+        score: float,
+        active_rules_map: Optional[Dict[str, Any]] = None,
+        rule_config_id: Optional[str] = None,
+        rule_version: int = 1,
+        combination_key: Optional[str] = None,
+        confidence_data: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Construct a consolidated KYC extraction and comparison table.
@@ -772,6 +843,21 @@ class CrossDocumentComparator:
         7. Expiry Date / Validity
         (Issue Date is completely removed from the interface).
         """
+        def is_rule_disabled(key: str) -> bool:
+            if not active_rules_map:
+                return False
+            r = active_rules_map.get(key)
+            if not r:
+                return False
+            # Never substitute NOT EXECUTED for NOT APPLICABLE. Single-document or non-comparable attributes are not disabled policy rules.
+            if r.get("concept") in ("single_document_field", "incompatible_identifiers"):
+                return False
+            if r.get("rule_type") in ("single_document", "incompatible"):
+                return False
+            if r.get("is_enabled") is False and (r.get("concept") == key or r.get("source_attribute") == key):
+                return True
+            return False
+
         # Sort documents into logical KYC order: Aadhaar -> PAN -> Passport -> Driving Licence -> Voter ID
         type_rank = {
             "aadhaar": 1,
@@ -804,6 +890,42 @@ class CrossDocumentComparator:
         matrix_rows = []
 
         # ==========================================
+        # 0. Declared Applicant Identity Validation
+        # ==========================================
+        from backend.services.confidence_service import VerificationConfidenceEngine
+        id_val = VerificationConfidenceEngine.validate_applicant_identity(applicant_name, docs_sorted)
+        id_cell_vals = {}
+        for d in docs_sorted:
+            val = d["fields"].get("name") or d["fields"].get("applicant_name")
+            id_cell_vals[d["id"]] = str(val).strip() if (val and str(val).strip()) else "Not detected"
+
+        if not applicant_name or not str(applicant_name).strip():
+            id_status = "MISSING"
+            id_label = "MISSING"
+            id_exp = "Declared applicant name was not provided for identity cross-validation."
+        elif id_val["status"] == "PASS":
+            id_status = "MATCH"
+            id_label = "MATCH"
+            id_exp = id_val["message"]
+        elif id_val["status"] == "REVIEW_REQUIRED":
+            id_status = "NOT_COMPARABLE"
+            id_label = "NOT COMPARABLE"
+            id_exp = id_val["message"]
+        else:
+            id_status = "MISMATCH"
+            id_label = "MISMATCH"
+            id_exp = id_val["message"]
+
+        matrix_rows.append({
+            "attribute_key": "identity_validation",
+            "attribute_label": "Declared Applicant Identity",
+            "values": id_cell_vals,
+            "result_status": id_status,
+            "result_label": id_label,
+            "explanation": id_exp
+        })
+
+        # ==========================================
         # 1. Customer Name Row
         # ==========================================
         name_vals = {}
@@ -812,12 +934,16 @@ class CrossDocumentComparator:
             val = d["fields"].get("name") or d["fields"].get("applicant_name")
             if val and str(val).strip():
                 name_vals[d["id"]] = str(val).strip()
-                dtype = (d.get("type") or "Doc").replace("_", " ").upper()
+                dtype = (d.get("type") or "Doc").replace("_", " ").title()
                 name_entries.append((dtype, str(val).strip(), cls.normalize_name(val)))
             else:
                 name_vals[d["id"]] = "Not detected"
 
-        if len(name_entries) >= 2:
+        if is_rule_disabled("name"):
+            name_status = "NOT_EXECUTED"
+            name_label = "NOT EXECUTED"
+            name_exp = "Customer name comparison disabled by active triangulation policy."
+        elif len(name_entries) >= 2:
             mismatches = []
             for i in range(len(name_entries)):
                 for j in range(i + 1, len(name_entries)):
@@ -828,9 +954,10 @@ class CrossDocumentComparator:
                         mismatches.append((t1, raw1, t2, raw2, sim))
 
             if not mismatches:
+                doc_types_str = " and ".join(e[0] for e in name_entries)
                 name_status = "MATCH"
                 name_label = "MATCH"
-                name_exp = f"Customer name matches across all submitted documents ('{name_entries[0][1]}')."
+                name_exp = f"Name matches across {doc_types_str}: {name_entries[0][1]}."
             else:
                 worst = min(mismatches, key=lambda x: x[4])
                 t1, raw1, t2, raw2, min_sim = worst
@@ -838,13 +965,19 @@ class CrossDocumentComparator:
                 name_label = "MISMATCH"
                 name_exp = f"Name mismatch: {t1} ('{raw1}') differs from {t2} ('{raw2}')."
         elif len(name_entries) == 1:
-            name_status = "MATCH"
-            name_label = "MATCH"
-            name_exp = f"Name recorded from {name_entries[0][0]} ('{name_entries[0][1]}')."
+            if len(docs_sorted) > 1:
+                other_types = [d.get("type", "Document").replace("_", " ").title() for d in docs_sorted if (d["fields"].get("name") is None or not str(d["fields"].get("name", "")).strip())]
+                name_status = "NOT_DETECTED"
+                name_label = "NOT DETECTED"
+                name_exp = f"Name recorded from {name_entries[0][0]} ('{name_entries[0][1]}'), but not detected on {', '.join(other_types)}. Cross-document comparison could not be completed."
+            else:
+                name_status = "NOT_COMPARABLE"
+                name_label = "NOT COMPARABLE"
+                name_exp = f"Name recorded from {name_entries[0][0]} ('{name_entries[0][1]}'). Single document submitted; multi-document comparison requires at least two documents."
         else:
-            name_status = "NOT DETECTED"
-            name_label = "NOT DETECTED"
-            name_exp = "Customer name not detected on any uploaded document. Mandatory field required."
+            name_status = "MISSING"
+            name_label = "MISSING"
+            name_exp = "Customer name was not detected on any uploaded document."
 
         matrix_rows.append({
             "attribute_key": "name",
@@ -865,12 +998,16 @@ class CrossDocumentComparator:
             if raw and str(raw).strip():
                 norm = cls.normalize_dob(raw) or str(raw).strip()
                 dob_vals[d["id"]] = norm
-                dtype = (d.get("type") or "Doc").replace("_", " ").upper()
+                dtype = (d.get("type") or "Doc").replace("_", " ").title()
                 dob_entries.append((dtype, str(raw).strip(), norm))
             else:
                 dob_vals[d["id"]] = "Not detected"
 
-        if len(dob_entries) >= 2:
+        if is_rule_disabled("dob"):
+            dob_status = "NOT_EXECUTED"
+            dob_label = "NOT EXECUTED"
+            dob_exp = "Date of birth comparison disabled by active triangulation policy."
+        elif len(dob_entries) >= 2:
             mismatches = []
             for i in range(len(dob_entries)):
                 for j in range(i + 1, len(dob_entries)):
@@ -880,22 +1017,29 @@ class CrossDocumentComparator:
                         mismatches.append((t1, raw1, t2, raw2))
 
             if not mismatches:
+                doc_types_str = " and ".join(e[0] for e in dob_entries)
                 dob_status = "MATCH"
                 dob_label = "MATCH"
-                dob_exp = f"Date of Birth ({dob_entries[0][2]}) matches across all uploaded documents."
+                dob_exp = f"Date of birth matches across {doc_types_str}: {dob_entries[0][2]}."
             else:
                 t1, raw1, t2, raw2 = mismatches[0]
                 dob_status = "MISMATCH"
                 dob_label = "MISMATCH"
-                dob_exp = f"DOB mismatch: {t1} ('{raw1}') differs from {t2} ('{raw2}')."
+                dob_exp = f"Date of birth differs between {t1} ('{raw1}') and {t2} ('{raw2}')."
         elif len(dob_entries) == 1:
-            dob_status = "MATCH"
-            dob_label = "MATCH"
-            dob_exp = f"DOB recorded from {dob_entries[0][0]} ({dob_entries[0][2]})."
+            if len(docs_sorted) > 1:
+                other_types = [d.get("type", "Document").replace("_", " ").title() for d in docs_sorted if not (d["fields"].get("dob") or d["fields"].get("date_of_birth"))]
+                dob_status = "NOT_DETECTED"
+                dob_label = "NOT DETECTED"
+                dob_exp = f"DOB detected on {dob_entries[0][0]} ({dob_entries[0][2]}), but not detected on {', '.join(other_types)}."
+            else:
+                dob_status = "NOT_COMPARABLE"
+                dob_label = "NOT COMPARABLE"
+                dob_exp = f"DOB recorded from {dob_entries[0][0]} ({dob_entries[0][2]}). Single document submitted; no counterpart available for comparison."
         else:
-            dob_status = "NOT DETECTED"
-            dob_label = "NOT DETECTED"
-            dob_exp = "Date of Birth not detected on uploaded documents. Mandatory field required."
+            dob_status = "MISSING"
+            dob_label = "MISSING"
+            dob_exp = "Date of birth was not detected on any uploaded document."
 
         matrix_rows.append({
             "attribute_key": "dob",
@@ -920,37 +1064,58 @@ class CrossDocumentComparator:
                 if raw_g and str(raw_g).strip():
                     norm_g = cls.normalize_gender(raw_g)
                     gender_vals[d["id"]] = norm_g
-                    dtype = (d.get("type") or "Doc").replace("_", " ").upper()
+                    dtype = (d.get("type") or "Doc").replace("_", " ").title()
                     gender_entries.append((dtype, norm_g))
                 else:
                     gender_vals[d["id"]] = "Not detected"
 
-        if len(gender_entries) >= 2:
-            mismatches = []
-            for i in range(len(gender_entries)):
-                for j in range(i + 1, len(gender_entries)):
-                    t1, g1 = gender_entries[i]
-                    t2, g2 = gender_entries[j]
-                    if g1 != g2:
-                        mismatches.append((t1, g1, t2, g2))
-
-            if not mismatches:
-                gender_status = "MATCH"
-                gender_label = "MATCH"
-                gender_exp = f"Gender ({gender_entries[0][1]}) is consistent across documents."
-            else:
-                t1, g1, t2, g2 = mismatches[0]
-                gender_status = "MISMATCH"
-                gender_label = "MISMATCH"
-                gender_exp = f"Conflicting gender entries: {t1} ('{g1}') vs {t2} ('{g2}')."
-        elif len(gender_entries) == 1:
-            gender_status = "NOT APPLICABLE"
-            gender_label = "NOT APPLICABLE"
-            gender_exp = f"Gender recorded on {gender_entries[0][0]} ('{gender_entries[0][1]}'). Not applicable on other documents."
+        if is_rule_disabled("gender"):
+            gender_status = "NOT_EXECUTED"
+            gender_label = "NOT EXECUTED"
+            gender_exp = "Gender comparison disabled by active triangulation policy."
         else:
-            gender_status = "NOT APPLICABLE"
-            gender_label = "NOT APPLICABLE"
-            gender_exp = "Gender not applicable or not recorded on uploaded document types."
+            supported_gender_docs = [d for d in docs_sorted if (d.get("type") or "").lower() != "pan"]
+            if len(supported_gender_docs) == 0:
+                gender_status = "NOT_APPLICABLE"
+                gender_label = "NOT APPLICABLE"
+                gender_exp = "Gender is not supported by PAN Card. No comparison required."
+            elif len(gender_entries) >= 2:
+                mismatches = []
+                for i in range(len(gender_entries)):
+                    for j in range(i + 1, len(gender_entries)):
+                        t1, g1 = gender_entries[i]
+                        t2, g2 = gender_entries[j]
+                        if g1 != g2:
+                            mismatches.append((t1, g1, t2, g2))
+
+                if not mismatches:
+                    doc_types_str = " and ".join(e[0] for e in gender_entries)
+                    gender_status = "MATCH"
+                    gender_label = "MATCH"
+                    gender_exp = f"Gender matches across {doc_types_str}: {gender_entries[0][1]}."
+                else:
+                    t1, g1, t2, g2 = mismatches[0]
+                    gender_status = "MISMATCH"
+                    gender_label = "MISMATCH"
+                    gender_exp = f"Gender mismatch between {t1} ('{g1}') and {t2} ('{g2}')."
+            elif len(gender_entries) == 1:
+                has_pan = any((d.get("type") or "").lower() == "pan" for d in docs_sorted)
+                if has_pan and len(supported_gender_docs) == 1:
+                    gender_status = "NOT_APPLICABLE"
+                    gender_label = "NOT APPLICABLE"
+                    gender_exp = f"Gender recorded on {gender_entries[0][0]} ('{gender_entries[0][1]}'). PAN Card does not record gender; no comparison was required."
+                elif len(docs_sorted) > 1:
+                    gender_status = "NOT_DETECTED"
+                    gender_label = "NOT DETECTED"
+                    gender_exp = f"Gender recorded on {gender_entries[0][0]} ('{gender_entries[0][1]}'), but not detected on other submitted identity document."
+                else:
+                    gender_status = "NOT_COMPARABLE"
+                    gender_label = "NOT COMPARABLE"
+                    gender_exp = f"Gender recorded on {gender_entries[0][0]} ('{gender_entries[0][1]}'). Single document submitted; no comparison counterpart."
+            else:
+                gender_status = "NOT_DETECTED"
+                gender_label = "NOT DETECTED"
+                gender_exp = "Gender is an expected attribute on submitted document but could not be detected."
 
         matrix_rows.append({
             "attribute_key": "gender",
@@ -979,21 +1144,19 @@ class CrossDocumentComparator:
                 or d["fields"].get("voter_id")
             )
             if val and str(val).strip():
-                # Format/mask if needed
-                s_val = str(val).strip()
-                id_vals[d["id"]] = s_val
+                id_vals[d["id"]] = str(val).strip()
             else:
                 id_vals[d["id"]] = "Not detected"
-                missing_ids.append(d.get("type", "Doc"))
+                missing_ids.append((d.get("type") or "Doc").replace("_", " ").title())
 
         if missing_ids:
-            id_status = "NEEDS REVIEW"
-            id_label = "NEEDS REVIEW"
+            id_status = "NOT_DETECTED"
+            id_label = "NOT DETECTED"
             id_exp = f"Identification number missing or unreadable on {', '.join(missing_ids)}."
         else:
             id_status = "MATCH"
             id_label = "MATCH"
-            id_exp = "Identification numbers validated individually per document regulatory format. Different document types are not cross-compared."
+            id_exp = "Identification numbers validated individually against regulatory formats (Aadhaar/PAN/Passport are document-specific)."
 
         matrix_rows.append({
             "attribute_key": "id_number",
@@ -1017,33 +1180,53 @@ class CrossDocumentComparator:
                 val = d["fields"].get("address")
                 if val and len(str(val).strip()) >= 5:
                     addr_vals[d["id"]] = str(val).strip()
-                    dtype = (d.get("type") or "Doc").replace("_", " ").upper()
+                    dtype = (d.get("type") or "Doc").replace("_", " ").title()
                     addr_entries.append((dtype, str(val).strip()))
                 else:
                     addr_vals[d["id"]] = "Not detected"
 
-        if len(addr_entries) >= 2:
-            sim = fuzz.token_set_ratio(addr_entries[0][1].lower(), addr_entries[1][1].lower())
-            if sim >= cls.ADDRESS_MATCH_THRESHOLD:
-                addr_status = "MATCH"
-                addr_label = "MATCH"
-                addr_exp = f"Address consistent across address proofs ({sim}% match)."
-            elif sim >= 45:
-                addr_status = "NEEDS REVIEW"
-                addr_label = "NEEDS REVIEW"
-                addr_exp = f"Minor address variation between documents ({sim}% match). Review recommended."
-            else:
-                addr_status = "MISMATCH"
-                addr_label = "MISMATCH"
-                addr_exp = f"Address mismatch: {addr_entries[0][0]} differs significantly from {addr_entries[1][0]}."
-        elif len(addr_entries) == 1:
-            addr_status = "MATCH"
-            addr_label = "MATCH"
-            addr_exp = f"Address recorded from {addr_entries[0][0]}."
+        if is_rule_disabled("address"):
+            addr_status = "NOT_EXECUTED"
+            addr_label = "NOT EXECUTED"
+            addr_exp = "Address comparison disabled by active triangulation policy."
         else:
-            addr_status = "NOT DETECTED"
-            addr_label = "NOT DETECTED"
-            addr_exp = "Residential address not present on submitted document types (e.g. PAN card only)."
+            supported_addr_docs = [d for d in docs_sorted if (d.get("type") or "").lower() != "pan"]
+            if len(supported_addr_docs) == 0:
+                addr_status = "NOT_APPLICABLE"
+                addr_label = "NOT APPLICABLE"
+                addr_exp = "Residential address is not supported by PAN Card. No comparison required."
+            elif len(addr_entries) >= 2:
+                sim = fuzz.token_set_ratio(addr_entries[0][1].lower(), addr_entries[1][1].lower())
+                if sim >= cls.ADDRESS_MATCH_THRESHOLD:
+                    addr_status = "MATCH"
+                    addr_label = "MATCH"
+                    addr_exp = f"Address consistent across address proofs ({sim}% concordance)."
+                elif sim >= 45:
+                    addr_status = "MISMATCH"
+                    addr_label = "MISMATCH"
+                    addr_exp = f"Minor address variation between documents ({sim}% match). Review recommended."
+                else:
+                    addr_status = "MISMATCH"
+                    addr_label = "MISMATCH"
+                    addr_exp = f"Address mismatch: {addr_entries[0][0]} differs significantly from {addr_entries[1][0]}."
+            elif len(addr_entries) == 1:
+                has_pan = any((d.get("type") or "").lower() == "pan" for d in docs_sorted)
+                if has_pan and len(supported_addr_docs) == 1:
+                    addr_status = "NOT_COMPARABLE"
+                    addr_label = "NOT COMPARABLE"
+                    addr_exp = f"Address recorded from {addr_entries[0][0]}. PAN Card does not support address; no secondary address proof was submitted for comparison."
+                elif len(docs_sorted) > 1:
+                    addr_status = "NOT_DETECTED"
+                    addr_label = "NOT DETECTED"
+                    addr_exp = f"Address recorded on {addr_entries[0][0]}, but not detected on remaining submitted address proof."
+                else:
+                    addr_status = "NOT_COMPARABLE"
+                    addr_label = "NOT COMPARABLE"
+                    addr_exp = f"Address recorded from {addr_entries[0][0]}. Single document submitted; no secondary address proof available."
+            else:
+                addr_status = "NOT_DETECTED"
+                addr_label = "NOT DETECTED"
+                addr_exp = "Residential address was not detected on submitted address proof document."
 
         matrix_rows.append({
             "attribute_key": "address",
@@ -1060,33 +1243,56 @@ class CrossDocumentComparator:
         father_vals = {}
         father_entries = []
         for d in docs_sorted:
-            val = d["fields"].get("father_name") or d["fields"].get("guardian_name") or d["fields"].get("husband_name")
-            if val and str(val).strip():
-                father_vals[d["id"]] = str(val).strip()
-                dtype = (d.get("type") or "Doc").replace("_", " ").upper()
-                father_entries.append((dtype, str(val).strip()))
+            t = (d.get("type") or "").lower()
+            if t == "aadhaar":
+                father_vals[d["id"]] = "Not applicable"
             else:
-                t = (d.get("type") or "").lower()
-                father_vals[d["id"]] = "Not detected" if t in ("pan", "driving_licence", "passport", "voter_id") else "Not applicable"
+                val = d["fields"].get("father_name") or d["fields"].get("guardian_name") or d["fields"].get("husband_name")
+                if val and str(val).strip():
+                    father_vals[d["id"]] = str(val).strip()
+                    dtype = (d.get("type") or "Doc").replace("_", " ").title()
+                    father_entries.append((dtype, str(val).strip()))
+                else:
+                    father_vals[d["id"]] = "Not detected" if t in ("pan", "driving_licence", "passport", "voter_id") else "Not applicable"
 
-        if len(father_entries) >= 2:
-            sim = fuzz.token_sort_ratio(father_entries[0][1].lower(), father_entries[1][1].lower())
-            if sim >= 80:
-                father_status = "MATCH"
-                father_label = "MATCH"
-                father_exp = f"Father/Guardian name matches across documents ({sim}% match)."
-            else:
-                father_status = "MISMATCH"
-                father_label = "MISMATCH"
-                father_exp = f"Father/Guardian name mismatch: {father_entries[0][0]} ('{father_entries[0][1]}') vs {father_entries[1][0]} ('{father_entries[1][1]}')."
-        elif len(father_entries) == 1:
-            father_status = "MATCH"
-            father_label = "MATCH"
-            father_exp = f"Father/Guardian name recorded from {father_entries[0][0]} ('{father_entries[0][1]}')."
+        if is_rule_disabled("father_name"):
+            father_status = "NOT_EXECUTED"
+            father_label = "NOT EXECUTED"
+            father_exp = "Father / Guardian name comparison disabled by active triangulation policy."
         else:
-            father_status = "NOT APPLICABLE"
-            father_label = "NOT APPLICABLE"
-            father_exp = "Father / Guardian name not recorded on submitted documents."
+            supported_father_docs = [d for d in docs_sorted if (d.get("type") or "").lower() in ("pan", "driving_licence", "passport", "voter_id")]
+            if len(supported_father_docs) == 0:
+                father_status = "NOT_APPLICABLE"
+                father_label = "NOT APPLICABLE"
+                father_exp = "Father / Guardian name is not a standard attribute on Aadhaar Card."
+            elif len(father_entries) >= 2:
+                sim = fuzz.token_sort_ratio(father_entries[0][1].lower(), father_entries[1][1].lower())
+                if sim >= 80:
+                    father_status = "MATCH"
+                    father_label = "MATCH"
+                    father_exp = f"Father / Guardian name matches across documents: {father_entries[0][1]}."
+                else:
+                    father_status = "MISMATCH"
+                    father_label = "MISMATCH"
+                    father_exp = f"Father / Guardian name mismatch: {father_entries[0][0]} ('{father_entries[0][1]}') vs {father_entries[1][0]} ('{father_entries[1][1]}')."
+            elif len(father_entries) == 1:
+                has_aadhaar = any((d.get("type") or "").lower() == "aadhaar" for d in docs_sorted)
+                if has_aadhaar and len(supported_father_docs) == 1:
+                    father_status = "NOT_COMPARABLE"
+                    father_label = "NOT COMPARABLE"
+                    father_exp = f"Father's name recorded from {father_entries[0][0]} ('{father_entries[0][1]}'). Not applicable on Aadhaar Card; no comparison counterpart."
+                elif len(docs_sorted) > 1:
+                    father_status = "NOT_DETECTED"
+                    father_label = "NOT DETECTED"
+                    father_exp = f"Father's name recorded from {father_entries[0][0]}, but not detected on other submitted document."
+                else:
+                    father_status = "NOT_COMPARABLE"
+                    father_label = "NOT COMPARABLE"
+                    father_exp = f"Father's name recorded from {father_entries[0][0]} ('{father_entries[0][1]}'). Single document submitted; no counterpart available."
+            else:
+                father_status = "NOT_DETECTED"
+                father_label = "NOT DETECTED"
+                father_exp = "Father / Guardian name not detected on submitted documents."
 
         matrix_rows.append({
             "attribute_key": "father_name",
@@ -1104,6 +1310,7 @@ class CrossDocumentComparator:
         has_expired = False
         expired_docs = []
         missing_exp = []
+        has_valid_exp = False
         today = date.today()
 
         for d in docs_sorted:
@@ -1129,6 +1336,7 @@ class CrossDocumentComparator:
                         expired_docs.append(f"{t.replace('_', ' ').title()} ({exp})")
                         exp_vals[d["id"]] = f"{exp} (Expired)"
                     else:
+                        has_valid_exp = True
                         exp_vals[d["id"]] = f"{exp} (Valid)"
                 else:
                     exp_vals[d["id"]] = "Not detected"
@@ -1136,18 +1344,26 @@ class CrossDocumentComparator:
             else:
                 exp_vals[d["id"]] = "Not applicable"
 
-        if has_expired:
-            exp_status = "EXPIRED"
+        if is_rule_disabled("expiry_date"):
+            exp_status = "NOT_EXECUTED"
+            exp_label = "NOT EXECUTED"
+            exp_exp = "Expiry date comparison disabled by active triangulation policy."
+        elif has_expired:
+            exp_status = "MISMATCH"
             exp_label = "EXPIRED"
             exp_exp = f"Document has expired: {', '.join(expired_docs)} (Past legal validity date)."
         elif missing_exp:
-            exp_status = "NEEDS REVIEW"
-            exp_label = "NEEDS REVIEW"
+            exp_status = "NOT_DETECTED"
+            exp_label = "NOT DETECTED"
             exp_exp = f"Expiry date not detected on {', '.join(missing_exp)}. Human verification required."
-        else:
+        elif has_valid_exp:
             exp_status = "MATCH"
             exp_label = "MATCH"
-            exp_exp = "All submitted documents are within their valid lifetime or legal validity periods."
+            exp_exp = "All submitted documents are within their valid legal validity periods."
+        else:
+            exp_status = "NOT_APPLICABLE"
+            exp_label = "NOT APPLICABLE"
+            exp_exp = "Submitted documents (Aadhaar, PAN) have lifetime validity. Expiration date is not applicable."
 
         matrix_rows.append({
             "attribute_key": "expiry_date",
@@ -1166,5 +1382,9 @@ class CrossDocumentComparator:
             "rows": matrix_rows,
             "overall_verdict": verdict,
             "consistency_score": score,
-            "summary_issues": discrepancies
+            "summary_issues": discrepancies,
+            "rule_configuration_id": rule_config_id,
+            "rule_version": rule_version,
+            "combination_key": combination_key,
+            "confidence": confidence_data
         }

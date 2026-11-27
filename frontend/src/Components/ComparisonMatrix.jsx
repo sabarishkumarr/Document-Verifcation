@@ -15,10 +15,10 @@ export default function ComparisonMatrix({ matrix, applicantId, applicantName, o
   const targetApplicantId = applicantId || matrix.applicant_id;
 
   const getStatusBadge = (status, label) => {
-    const s = (status || '').toLowerCase().replace(/_/g, ' ');
+    const s = (status || '').toLowerCase().replace(/_/g, ' ').trim();
     if (s === 'match' || s === 'valid') {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
           <span className="material-symbols-outlined text-[13px]">check_circle</span>
           {label || 'MATCH'}
         </span>
@@ -26,7 +26,7 @@ export default function ComparisonMatrix({ matrix, applicantId, applicantName, o
     }
     if (s === 'mismatch') {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-50 text-red-700 border border-red-200">
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">
           <span className="material-symbols-outlined text-[13px]">cancel</span>
           {label || 'MISMATCH'}
         </span>
@@ -34,30 +34,55 @@ export default function ComparisonMatrix({ matrix, applicantId, applicantName, o
     }
     if (s === 'expired') {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-300">
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-300 whitespace-nowrap">
           <span className="material-symbols-outlined text-[13px]">event_busy</span>
           {label || 'EXPIRED'}
         </span>
       );
     }
+    if (s === 'missing') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
+          <span className="material-symbols-outlined text-[13px]">error_outline</span>
+          {label || 'MISSING'}
+        </span>
+      );
+    }
+    if (s === 'not detected' || s === 'unavailable') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300 whitespace-nowrap">
+          <span className="material-symbols-outlined text-[13px]">search_off</span>
+          {label || 'NOT DETECTED'}
+        </span>
+      );
+    }
+    if (s === 'not comparable') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-300 whitespace-nowrap">
+          <span className="material-symbols-outlined text-[13px]">compare_arrows</span>
+          {label || 'NOT COMPARABLE'}
+        </span>
+      );
+    }
+    if (s === 'not executed') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-800 border border-purple-300 whitespace-nowrap">
+          <span className="material-symbols-outlined text-[13px]">do_not_disturb_on</span>
+          {label || 'NOT EXECUTED'}
+        </span>
+      );
+    }
     if (s === 'needs review' || s === 'warning' || s === 'variation') {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300 whitespace-nowrap">
           <span className="material-symbols-outlined text-[13px]">warning</span>
           {label || 'NEEDS REVIEW'}
         </span>
       );
     }
-    if (s === 'not detected' || s === 'unavailable' || s === 'missing') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
-          <span className="material-symbols-outlined text-[13px]">help_outline</span>
-          {label || 'NOT DETECTED'}
-        </span>
-      );
-    }
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+        <span className="material-symbols-outlined text-[12px] text-slate-400">remove_circle_outline</span>
         {label || 'NOT APPLICABLE'}
       </span>
     );
@@ -147,21 +172,21 @@ export default function ComparisonMatrix({ matrix, applicantId, applicantName, o
 
       {/* Spreadsheet Table */}
       <div className="overflow-x-auto w-full">
-        <table className="min-w-full text-left border-collapse text-[13px]">
+        <table className="min-w-full text-left border-collapse text-[13px] table-auto">
           <thead>
             <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
-              <th className="py-3 px-4 font-bold text-[#475569] uppercase tracking-wider text-[11px] w-[190px] min-w-[190px] max-w-[210px] break-words whitespace-normal sticky left-0 bg-[#F8FAFC] z-10 border-r border-[#E2E8F0]">
+              <th className="py-3 px-4 font-bold text-[#475569] uppercase tracking-wider text-[11px] w-[200px] min-w-[190px] max-w-[220px] break-words whitespace-normal sticky left-0 bg-[#F8FAFC] z-10 border-r border-[#E2E8F0]">
                 Identity Attribute
               </th>
               {columns.map((col) => (
-                <th key={col.id} className="py-3 px-4 font-semibold text-[#0F172A] w-[220px] min-w-[220px] max-w-[250px] border-r border-[#E2E8F0]">
+                <th key={col.id} className="py-3 px-4 font-semibold text-[#0F172A] w-[230px] min-w-[210px] max-w-[260px] border-r border-[#E2E8F0]">
                   <div className="flex items-center justify-between gap-1 mb-1">
                     <span className="text-[11px] font-mono text-[#64748B]">#{col.id.slice(0, 6)}</span>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-800">
                       {col.type_label || col.document_type}
                     </span>
                   </div>
-                  <div className="font-bold text-[12px] text-[#0F172A] break-all line-clamp-2 leading-tight" title={col.filename}>
+                  <div className="font-bold text-[12px] text-[#0F172A] break-words line-clamp-2 leading-tight" title={col.filename}>
                     {col.filename}
                   </div>
                 </th>
@@ -169,7 +194,7 @@ export default function ComparisonMatrix({ matrix, applicantId, applicantName, o
               <th className="py-3 px-4 font-bold text-[#475569] uppercase tracking-wider text-[11px] w-[140px] min-w-[140px] border-r border-[#E2E8F0]">
                 Result
               </th>
-              <th className="py-3 px-4 font-bold text-[#475569] uppercase tracking-wider text-[11px] min-w-[240px] max-w-[360px] break-words whitespace-normal">
+              <th className="py-3 px-4 font-bold text-[#475569] uppercase tracking-wider text-[11px] min-w-[220px] max-w-[360px] break-words whitespace-normal">
                 Verification Explanation
               </th>
             </tr>
@@ -177,7 +202,7 @@ export default function ComparisonMatrix({ matrix, applicantId, applicantName, o
           <tbody className="divide-y divide-[#E2E8F0]">
             {rows.map((row, idx) => (
               <tr key={idx} className={`transition-colors ${getRowBackground(row.result_status)}`}>
-                <td className="py-3 px-4 font-bold text-[#0F172A] w-[190px] min-w-[190px] max-w-[210px] break-words whitespace-normal sticky left-0 bg-inherit z-10 border-r border-[#E2E8F0]">
+                <td className="py-3 px-4 font-bold text-[#0F172A] w-[200px] min-w-[190px] max-w-[220px] break-words whitespace-normal sticky left-0 bg-inherit z-10 border-r border-[#E2E8F0]">
                   {row.attribute_label}
                 </td>
                 {columns.map((col) => {
@@ -185,21 +210,21 @@ export default function ComparisonMatrix({ matrix, applicantId, applicantName, o
                   const isNotDetected = !val || val === 'Not detected' || val === 'Not Detected' || val === 'Not Available';
                   const isNotApplicable = val === 'Not applicable' || val === 'Not Applicable';
                   return (
-                    <td key={col.id} className="py-3 px-4 border-r border-[#E2E8F0] font-mono text-[12px] w-[220px] min-w-[220px] max-w-[250px] break-words whitespace-normal">
+                    <td key={col.id} className="py-3 px-4 border-r border-[#E2E8F0] font-mono text-[12px] w-[230px] min-w-[210px] max-w-[260px] break-words whitespace-normal align-top">
                       {isNotApplicable ? (
-                        <span className="text-slate-400 italic font-sans">Not applicable</span>
+                        <span className="text-slate-400 italic font-sans text-xs">Not applicable</span>
                       ) : isNotDetected ? (
-                        <span className="text-amber-700 italic font-sans font-medium">Not detected</span>
+                        <span className="text-amber-700 italic font-sans font-medium text-xs">Not detected</span>
                       ) : (
                         <span className="text-[#0F172A] font-medium break-words">{String(val)}</span>
                       )}
                     </td>
                   );
                 })}
-                <td className="py-3 px-4 border-r border-[#E2E8F0] w-[140px] min-w-[140px] align-middle">
+                <td className="py-3 px-4 border-r border-[#E2E8F0] w-[140px] min-w-[140px] align-top">
                   {getStatusBadge(row.result_status, row.result_label)}
                 </td>
-                <td className="py-3 px-4 text-[12px] text-[#475569] leading-relaxed min-w-[240px] max-w-[360px] break-words whitespace-normal">
+                <td className="py-3 px-4 text-[12px] text-[#475569] leading-relaxed min-w-[220px] max-w-[360px] break-words whitespace-normal align-top">
                   {row.explanation}
                 </td>
               </tr>

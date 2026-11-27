@@ -1,0 +1,108 @@
+[
+  {
+    "v": 2,
+    "name": "VeriDoc AI 2.0 — Enterprise Bulk API & Verification Suite",
+    "folders": [],
+    "requests": [
+      {
+        "v": "1",
+        "name": "1. Operational Readiness Probe",
+        "method": "GET",
+        "endpoint": "<<base_url>>/api/v1/ready",
+        "headers": [
+          { "key": "Accept", "value": "application/json", "active": true }
+        ],
+        "params": [],
+        "body": { "contentType": null, "body": null },
+        "auth": { "authType": "none", "authActive": true }
+      },
+      {
+        "v": "1",
+        "name": "2. Submit Bulk Base64 Batch",
+        "method": "POST",
+        "endpoint": "<<base_url>>/api/v1/batches",
+        "headers": [
+          { "key": "X-API-Key", "value": "<<api_key>>", "active": true },
+          { "key": "Content-Type", "value": "application/json", "active": true },
+          { "key": "Accept", "value": "application/json", "active": true }
+        ],
+        "params": [],
+        "body": {
+          "contentType": "application/json",
+          "body": "{\n  \"source_system\": \"HRMS_PORTAL\",\n  \"external_applicant_reference\": \"EMP-2026-9812\",\n  \"external_application_reference\": \"ONBOARDING-APP-442\",\n  \"applicant_name\": \"Aditya Sharma\",\n  \"idempotency_key\": \"IDEMPOTENCY-KEY-001\",\n  \"documents\": [\n    {\n      \"external_document_reference\": \"DOC-REF-PAN-01\",\n      \"file_name\": \"aditya_pan.png\",\n      \"mime_type\": \"image/png\",\n      \"specified_document_type\": \"pan\",\n      \"content_base64\": \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=\"\n    },\n    {\n      \"external_document_reference\": \"DOC-REF-AADHAAR-02\",\n      \"file_name\": \"aditya_aadhaar.png\",\n      \"mime_type\": \"image/png\",\n      \"specified_document_type\": \"aadhaar\",\n      \"content_base64\": \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=\"\n    }\n  ]\n}"
+        },
+        "auth": { "authType": "none", "authActive": true }
+      },
+      {
+        "v": "1",
+        "name": "3. Get Batch Processing Status",
+        "method": "GET",
+        "endpoint": "<<base_url>>/api/v1/batches/<<batch_id>>",
+        "headers": [
+          { "key": "X-API-Key", "value": "<<api_key>>", "active": true },
+          { "key": "Accept", "value": "application/json", "active": true }
+        ],
+        "params": [],
+        "body": { "contentType": null, "body": null },
+        "auth": { "authType": "none", "authActive": true }
+      },
+      {
+        "v": "1",
+        "name": "4. Get Batch Extraction Results",
+        "method": "GET",
+        "endpoint": "<<base_url>>/api/v1/batches/<<batch_id>>/results",
+        "headers": [
+          { "key": "X-API-Key", "value": "<<api_key>>", "active": true },
+          { "key": "Accept", "value": "application/json", "active": true }
+        ],
+        "params": [],
+        "body": { "contentType": null, "body": null },
+        "auth": { "authType": "none", "authActive": true }
+      },
+      {
+        "v": "1",
+        "name": "5. Trigger Batch Verification",
+        "method": "POST",
+        "endpoint": "<<base_url>>/api/v1/batches/<<batch_id>>/verification",
+        "headers": [
+          { "key": "X-API-Key", "value": "<<api_key>>", "active": true },
+          { "key": "Content-Type", "value": "application/json", "active": true },
+          { "key": "Accept", "value": "application/json", "active": true }
+        ],
+        "params": [],
+        "body": { "contentType": null, "body": null },
+        "auth": { "authType": "none", "authActive": true }
+      },
+      {
+        "v": "1",
+        "name": "6. Get Applicant Verification Summary",
+        "method": "GET",
+        "endpoint": "<<base_url>>/api/v1/applicants/<<applicant_id>>/verification",
+        "headers": [
+          { "key": "X-API-Key", "value": "<<api_key>>", "active": true },
+          { "key": "Accept", "value": "application/json", "active": true }
+        ],
+        "params": [],
+        "body": { "contentType": null, "body": null },
+        "auth": { "authType": "none", "authActive": true }
+      },
+      {
+        "v": "1",
+        "name": "7. Register HMAC Webhook Subscription",
+        "method": "POST",
+        "endpoint": "<<base_url>>/api/v1/webhooks",
+        "headers": [
+          { "key": "X-API-Key", "value": "<<api_key>>", "active": true },
+          { "key": "Content-Type", "value": "application/json", "active": true },
+          { "key": "Accept", "value": "application/json", "active": true }
+        ],
+        "params": [],
+        "body": {
+          "contentType": "application/json",
+          "body": "{\n  \"target_url\": \"https://webhook.site/sample-endpoint\",\n  \"subscribed_events\": [\"batch.completed\", \"verification.completed\"]\n}"
+        },
+        "auth": { "authType": "none", "authActive": true }
+      }
+    ]
+  }
+]
